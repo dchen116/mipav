@@ -210,11 +210,11 @@ public class LatticeModel {
 				if ( renameString.length() > 0 ) {
 					//TODO: add flag to not warn on duplicate annotations
 					
-					String errorMsg = "Duplicate annotations:\n" + renameString + "\n in file " + fileName;
+					String errorMsg = "Duplicate annotations:\n" + renameString + "\n in file " + fileName + "\n\n";
 					if(outputWriter == null)
 						MipavUtil.displayError( errorMsg);
 					else
-						outputWriter.append(errorMsg);
+						outputWriter.append(errorMsg + "\n");
 				}
 				fr.close();
 				if ( count > 1 )
@@ -232,6 +232,8 @@ public class LatticeModel {
 
 		return null;
 	}
+
+
 
 	public static VOIVector readLatticeCSV(String fileName) {
 		return readLatticeCSV(fileName, false);
@@ -405,7 +407,7 @@ public class LatticeModel {
 	
 	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations, StringBuilder outputWriter) {
 		// TODO Auto-generated method stub
-		saveAnnotationsAsCSV(dir,fileName, annotations, outputWriter);
+		saveAnnotationsAsCSV(dir,fileName, annotations, false, outputWriter);
 	}
 
 	

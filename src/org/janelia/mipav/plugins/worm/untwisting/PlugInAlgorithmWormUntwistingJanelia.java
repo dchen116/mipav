@@ -65,6 +65,9 @@ import java.util.Vector;
 
 import javax.swing.JProgressBar;
 
+import org.janelia.mipav.test.FileOutputStreamDemo;
+import org.janelia.mipav.test.BatchProcessLogFrame;
+
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
@@ -491,6 +494,8 @@ public class PlugInAlgorithmWormUntwistingJanelia
 			MipavUtil.displayInfo( "Batch flip complete." );
 		}
 	}
+	
+
 
 	/**
 	 * Run the lattice-based worm straightening algorithm for the list of input files.
@@ -498,20 +503,27 @@ public class PlugInAlgorithmWormUntwistingJanelia
 	 * @param includeRange the list of file IDs to run the algorithm on.
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
+	 * @param outputWriter 
 	 */
+	public static Object outputWriter;
+
+	
 	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, 
-			final String[] baseFileDir, final String baseFileName, final String outputDir, final int paddingFactor, final boolean segmentLattice )
+			final String[] baseFileDir, final String baseFileName, final String outputDir, final int paddingFactor, final boolean segmentLattice)
 	{
 		long time = System.currentTimeMillis();		
 		ModelImage wormImage = null;
 		ModelImage nucleiImage = null;
+		StringBuilder outputWriter = new StringBuilder();
+		String outputDirectory = null;
+		
 		if ( includeRange != null )
 		{
 			if ( !checkFilePaths( includeRange, baseFileDir[0], baseFileName ) ) return;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 
-				String outputDirectory = outputDir + File.separator + 
+				 outputDirectory = outputDir + File.separator + 
 						baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
 						baseFileName + "_" + includeRange.elementAt(i) + "_results";
 				
@@ -550,7 +562,7 @@ public class PlugInAlgorithmWormUntwistingJanelia
 					
 					// Untwist annotations:
 					boolean integratedMarkers = true;
-					VOI markers = WormData.getIntegratedMarkerAnnotations(outputDirectory);
+					VOI markers = WormData.getIntegratedMarkerAnnotations(outputDirectory, outputWriter);
 					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{
 						model.setMarkers(markers);
@@ -558,7 +570,7 @@ public class PlugInAlgorithmWormUntwistingJanelia
 
 						// save straight annotations:
 						LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + "straightened_annotations" + File.separator, 
-								"straightened_annotations.csv", model.getAnnotationsStraight());
+								"straightened_annotations.csv", model.getAnnotationsStraight(), outputWriter);
 
 					}
 					System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
@@ -648,7 +660,15 @@ public class PlugInAlgorithmWormUntwistingJanelia
 
 		System.err.println( "straighten elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
 		MipavUtil.displayInfo( "Lattice straightening complete." );
+		
+	//	MipavUtil.displayInfo( outputWriter.toString() + "\n" + "***  <DuplicatedAnnotation.txt>  is saved to:   " + System.getProperty("user.dir") + "\n" + "outputDirectory: "+ outputDirectory);
+		FileOutputStreamDemo.writeToFile( outputWriter.toString() );
+		BatchProcessLogFrame message = new BatchProcessLogFrame();
+		message.appendMessage(outputWriter.toString());
+		message.setCurrentDirectory(outputDirectory + File.separator + "straightened_annotations");
+		
 	}
+	
 	
 	/**
 	 * @param image the ModelImage for registering loaded VOIs.
@@ -1096,6 +1116,7 @@ public class PlugInAlgorithmWormUntwistingJanelia
 			pad.run();
 			regInput = padResult;
 
+			// this is a tests
 			pad.finalize();
 			pad = null;
 		}
