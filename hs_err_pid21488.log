@@ -1,0 +1,198 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 2143289344 bytes for Failed to commit area from 0x0000000082000000 to 0x0000000101c00000 of length 2143289344.
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   The process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (os_windows.cpp:3388), pid=21488, tid=12984
+#
+# JRE version:  (11.0.22+7) (build )
+# Java VM: OpenJDK 64-Bit Server VM (11.0.22+7-LTS, mixed mode, sharing, tiered, compressed oops, g1 gc, windows-amd64)
+# No core dump will be written. Minidumps are not enabled by default on client versions of Windows
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 org.janelia.mipav.test.DupAnnFound
+
+Host: Intel(R) Xeon(R) W-2155 CPU @ 3.30GHz, 20 cores, 127G,  Windows 10 , 64 bit Build 19041 (10.0.19041.3636)
+Time: Wed Feb 21 11:32:31 2024 Eastern Standard Time elapsed time: 0.034925 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x000001746ccde000):  JavaThread "Unknown thread" [_thread_in_vm, id=12984, stack(0x0000001053300000,0x0000001053400000)]
+
+Stack: [0x0000001053300000,0x0000001053400000]
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [jvm.dll+0x62cffa]
+V  [jvm.dll+0x7bbc29]
+V  [jvm.dll+0x7bd318]
+V  [jvm.dll+0x7bd9f3]
+V  [jvm.dll+0x252ec8]
+V  [jvm.dll+0x62a2fa]
+V  [jvm.dll+0x61e885]
+V  [jvm.dll+0x30e54c]
+V  [jvm.dll+0x30e3d2]
+V  [jvm.dll+0x3130e6]
+V  [jvm.dll+0x35acbf]
+V  [jvm.dll+0x35a6f0]
+V  [jvm.dll+0x2eac98]
+V  [jvm.dll+0x2ebdf6]
+V  [jvm.dll+0x795ba7]
+V  [jvm.dll+0x797331]
+V  [jvm.dll+0x367b59]
+V  [jvm.dll+0x778900]
+V  [jvm.dll+0x3d980f]
+V  [jvm.dll+0x3dbba1]
+C  [jli.dll+0x5367]
+C  [ucrtbase.dll+0x21bb2]
+C  [KERNEL32.DLL+0x17344]
+C  [ntdll.dll+0x526b1]
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x000001746a946180, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+
+Other Threads:
+  0x000001746a9fd000 GCTaskThread "GC Thread#0" [stack: 0x0000001053400000,0x0000001053500000] [id=14408]
+  0x000001746cd60800 ConcurrentGCThread "G1 Main Marker" [stack: 0x0000001053500000,0x0000001053600000] [id=31228]
+  0x000001746cd62000 ConcurrentGCThread "G1 Conc#0" [stack: 0x0000001053600000,0x0000001053700000] [id=3892]
+
+[error occurred during error reporting (printing all threads), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007fff4fefab37]
+
+VM state:not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x000001746ccdafb0] Heap_lock - owner thread: 0x000001746ccde000
+
+Heap address: 0x0000000082000000, size: 30688 MB, Compressed Oops mode: Non-zero based: 0x0000000082000000
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 0
+
+GC Heap History (0 events):
+No events
+
+Deoptimization events (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+Events (1 events):
+Event: 0.027 Loaded shared library C:\Program Files\Zulu\zulu-11\bin\zip.dll
+
+
+Dynamic libraries:
+0x00007ff6ee120000 - 0x00007ff6ee12d000 	C:\Program Files\Zulu\zulu-11\bin\javaw.exe
+0x00007fffb0d10000 - 0x00007fffb0f08000 	C:\WINDOWS\SYSTEM32\ntdll.dll
+0x00007fffb09f0000 - 0x00007fffb0aad000 	C:\WINDOWS\System32\KERNEL32.DLL
+0x00007fffae910000 - 0x00007fffaec06000 	C:\WINDOWS\System32\KERNELBASE.dll
+0x00007fffae810000 - 0x00007fffae910000 	C:\WINDOWS\System32\ucrtbase.dll
+0x00007fff9b4b0000 - 0x00007fff9b4c8000 	C:\Program Files\Zulu\zulu-11\bin\jli.dll
+0x00007fff9c1c0000 - 0x00007fff9c1d5000 	C:\Program Files\Zulu\zulu-11\bin\VCRUNTIME140.dll
+0x00007fffb0b10000 - 0x00007fffb0cae000 	C:\WINDOWS\System32\USER32.dll
+0x00007fff9b800000 - 0x00007fff9ba9a000 	C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.19041.3636_none_60b6a03d71f818d5\COMCTL32.dll
+0x00007fffae7e0000 - 0x00007fffae802000 	C:\WINDOWS\System32\win32u.dll
+0x00007fffaf9e0000 - 0x00007fffafa7e000 	C:\WINDOWS\System32\msvcrt.dll
+0x00007fffafb10000 - 0x00007fffafb3c000 	C:\WINDOWS\System32\GDI32.dll
+0x00007fffae3e0000 - 0x00007fffae4fa000 	C:\WINDOWS\System32\gdi32full.dll
+0x00007fffae660000 - 0x00007fffae6fd000 	C:\WINDOWS\System32\msvcp_win.dll
+0x00007fffaed60000 - 0x00007fffaed90000 	C:\WINDOWS\System32\IMM32.DLL
+0x000001746c410000 - 0x000001746c424000 	C:\WINDOWS\System32\umppc17706.dll
+0x00007fff86530000 - 0x00007fff865cb000 	C:\Program Files\Zulu\zulu-11\bin\msvcp140.dll
+0x00007fff4fc00000 - 0x00007fff50798000 	C:\Program Files\Zulu\zulu-11\bin\server\jvm.dll
+0x00007fffaf750000 - 0x00007fffaf803000 	C:\WINDOWS\System32\ADVAPI32.dll
+0x00007fffb01a0000 - 0x00007fffb023f000 	C:\WINDOWS\System32\sechost.dll
+0x00007fffaed90000 - 0x00007fffaeeb6000 	C:\WINDOWS\System32\RPCRT4.dll
+0x00007fffae7b0000 - 0x00007fffae7d7000 	C:\WINDOWS\System32\bcrypt.dll
+0x00007fffaf740000 - 0x00007fffaf748000 	C:\WINDOWS\System32\PSAPI.DLL
+0x00007fff97590000 - 0x00007fff97599000 	C:\WINDOWS\SYSTEM32\WSOCK32.dll
+0x00007fffb0130000 - 0x00007fffb019b000 	C:\WINDOWS\System32\WS2_32.dll
+0x00007fffa3e60000 - 0x00007fffa3e87000 	C:\WINDOWS\SYSTEM32\WINMM.dll
+0x00007fffad0a0000 - 0x00007fffad0aa000 	C:\WINDOWS\SYSTEM32\VERSION.dll
+0x00007fffacff0000 - 0x00007fffad002000 	C:\WINDOWS\SYSTEM32\kernel.appcore.dll
+0x00007fffa2050000 - 0x00007fffa2060000 	C:\Program Files\Zulu\zulu-11\bin\verify.dll
+0x00007fff999d0000 - 0x00007fff99bb4000 	C:\WINDOWS\SYSTEM32\DBGHELP.DLL
+0x00007fff97500000 - 0x00007fff97534000 	C:\WINDOWS\SYSTEM32\dbgcore.DLL
+0x00007fffaecd0000 - 0x00007fffaed52000 	C:\WINDOWS\System32\bcryptPrimitives.dll
+0x00007fff92e10000 - 0x00007fff92e38000 	C:\Program Files\Zulu\zulu-11\bin\java.dll
+0x00007fff91cc0000 - 0x00007fff91cca000 	C:\Program Files\Zulu\zulu-11\bin\jimage.dll
+0x00007fff8c440000 - 0x00007fff8c458000 	C:\Program Files\Zulu\zulu-11\bin\zip.dll
+
+dbghelp: loaded successfully - version: 4.0.5 - missing functions: none
+symbol engine: initialized successfully - sym options: 0x614 - pdb path: .;C:\Program Files\Zulu\zulu-11\bin;C:\WINDOWS\SYSTEM32;C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.19041.3636_none_60b6a03d71f818d5;C:\Program Files\Zulu\zulu-11\bin\server
+
+VM Arguments:
+jvm_args: -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 
+java_command: org.janelia.mipav.test.DupAnnFound
+java_class_path (initial): C:\Users\chend\eclipse-workspace\mipav\bin;C:\Users\chend\eclipse-workspace\mipav\src\lib\ACCESSION_client_VTool.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\activation.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\brics-model.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\brics-web-service.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\camino.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\commons-csv-1.4.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\commons-io-2.4.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\commons-logging-1.2.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\core_dictionary-4.1.1.8.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\dataDictionaryClient-4.1.1.8.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\fontbox-1.2.0.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\gmbal-api-only.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\hyperapplet.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\ij.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\javac.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\javax.persistence.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\jax-qname.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\jdom.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\jempbox-1.2.0.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\jhall.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\JimiProClasses.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\jj2kpack.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\jmf.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\jsr311-api-1.1.1.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\jTEM.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\junit-4.4.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\liblinear-1.51-with-deps.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\mail.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\mediaplayer.jar;C:\Users\chend\eclipse-workspace\mipav\src\lib\pdfbox-1.2.0.jar;C:\Us
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 12                                        {product} {ergonomic}
+     uint ConcGCThreads                            = 4                                         {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 15                                        {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 4194304                                   {product} {ergonomic}
+    uintx GCDrainStackTargetSize                   = 64                                        {product} {ergonomic}
+   size_t InitialHeapSize                          = 2143289344                                {product} {ergonomic}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MaxHeapSize                              = 32178700288                               {product} {ergonomic}
+   size_t MinHeapDeltaBytes                        = 4194304                                   {product} {ergonomic}
+    uintx NonNMethodCodeHeapSize                   = 7594288                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 122031976                              {pd product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 122031976                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251658240                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+     bool UseCompressedClassPointers               = true                                 {lp64_product} {ergonomic}
+     bool UseCompressedOops                        = true                                 {lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+     bool UseLargePagesIndividualAllocation        = false                                  {pd product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags
+ #1: stderr all=off uptime,level,tags
+
+Environment Variables:
+PATH=C:/Users/chend/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_17.0.10.v20240120-1143/jre/bin/server;C:/Users/chend/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_17.0.10.v20240120-1143/jre/bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files\Zulu\zulu-11\bin\;C:\Program Files\AdoptOpenJDK\jdk8u202-b08-jre\bin;C:\windows\system32;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NGX;C:\Program Files\MATLAB\R2020b\runtime\win64;C:\Program Files\MATLAB\R2020b\bin;C:\Program Files\MATLAB\R2018b\runtime\win64;C:\Program Files\MATLAB\R2018b\bin;C:\Program Files\Zulu\zulu-8\bin\;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Program Files\PuTTY\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\dotnet\;C:\Users\chend\AppData\Local\Microsoft\WindowsApps;;C:\Users\chend\Desktop;
+USERNAME=chend
+OS=Windows_NT
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 85 Stepping 4, GenuineIntel
+TMP=C:\Users\chend\AppData\Local\Temp
+TEMP=C:\Users\chend\AppData\Local\Temp
+
+
+
+---------------  S Y S T E M  ---------------
+
+OS: Windows 10 , 64 bit Build 19041 (10.0.19041.3636)
+OS uptime: 14 days 23:54 hours
+Hyper-V role detected
+
+CPU:total 20 (initial active 20) (10 cores per cpu, 2 threads per core) family 6 model 85 stepping 4 microcode 0x200005e, cmov, cx8, fxsr, mmx, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, avx, avx2, aes, clmul, erms, rtm, 3dnowpref, lzcnt, ht, tsc, tscinvbit, bmi1, bmi2, adx, fma
+
+Memory: 4k page, system-wide physical 130746M (81136M free)
+TotalPageFile size 251248M (AvailPageFile size 847M)
+current process WorkingSet (physical memory assigned to process): 11M, peak: 11M
+current process commit charge ("private bytes"): 79M, peak: 2123M
+
+vm_info: OpenJDK 64-Bit Server VM (11.0.22+7-LTS) for windows-amd64 JRE (Zulu11.70+15-CA) (11.0.22+7-LTS), built on Jan  5 2024 14:01:50 by "zulu_re" with MS VC++ 15.9 (VS2017)
+
+END.

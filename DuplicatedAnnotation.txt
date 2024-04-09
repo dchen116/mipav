@@ -1,0 +1,17 @@
+Here are the errors need to be fixed:
+
+Duplicate annotations:
+A2
+A3
+
+ in file E:\Diyi\Pos3\SPIMB\Registered_Volumes\For_Tracking\RegB\Decon_reg_45\Decon_reg_45_results\integrated_annotation\annotations.csv
+
+
+Duplicate annotations:
+A2
+A3
+
+ in file E:\Diyi\Pos3\SPIMB\Registered_Volumes\For_Tracking\RegB\Decon_reg_45\Decon_reg_45_results\straightened_annotations\\straightened_annotations.csv
+
+
+
