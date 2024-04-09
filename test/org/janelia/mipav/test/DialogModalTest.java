@@ -7,9 +7,11 @@ import java.awt.Dialog;
 import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.io.FileNotFoundException;
@@ -17,6 +19,7 @@ import java.io.FileNotFoundException;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -32,85 +35,46 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
-public class DialogModalTest implements ActionListener, ItemListener {
+public class DialogModalTest extends JComponent implements ActionListener, ItemListener {
 	
 	JFrame myFrame;
 	JDialog myDialog1;
     JCheckBox SnowButton;
     JCheckBox RainButton;
     JCheckBox SunshineButton;
+    static StringBuffer choices;
 	
 	
-	public DialogModalTest(JFrame myFrame, JDialog myDialog1, JCheckBox SnowButton, JCheckBox RainButton, JCheckBox SunshineButton  ) {
+	public DialogModalTest(JFrame myFrame, JDialog myDialog1) {
 		super();
 		this.myFrame = myFrame;
 		this.myDialog1 = myDialog1;
-		this.RainButton = SnowButton;
+		this.SnowButton = SnowButton;
 		this.RainButton = RainButton;
 		this.SunshineButton = SunshineButton;
 		
+		SnowButton.addActionListener(this);
+		SnowButton.addItemListener(this);
+		
+		CheckBox();
 	}
 
 
 	public static void main(String[] args) {
-		// Demonstration of simple JDialog
-		/*
-		  JOptionPane pane = new JOptionPane("this is some message"); JDialog mydialog
-		  = pane.createDialog("this is the title"); //mydialog.show();
-		  mydialog.setModalityType(ModalityType.MODELESS); mydialog.setVisible(true);
-		  System.out.println("Hello world");
-		 */
-
-		// first dialog pops the second dialog(modeless), which sleep for 5 sec to pop
-		// the third dialog
-/*
-		JOptionPane pane1 = new JOptionPane("Press 'OK' to move from modal to modeless dialog");
-		JDialog mydialog1 = pane1.createDialog("Dialog #1");
-		mydialog1.setModalityType(ModalityType.APPLICATION_MODAL);
-		mydialog1.setVisible(true);
-		System.out.println("OK");
-
-		JOptionPane pane2 = new JOptionPane("You pressed 'OK'");
-		JDialog mydialog2 = pane2.createDialog("Dialog #2");
-		mydialog2.setModalityType(ModalityType.MODELESS);
-
-		JOptionPane pane3 = new JOptionPane("It's been 5 seconds");
-		JDialog mydialog3 = pane3.createDialog("Dialog #3");
-		mydialog3.setModalityType(ModalityType.APPLICATION_MODAL);
-		// mydialog3.setVisible(true);
-
-		int delay = 5000; // milliseconds
-		Timer timer = new Timer(delay, new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				mydialog2.dispose();
-				mydialog3.setVisible(true);
-			}
-		});
-		timer.setRepeats(false);
-		timer.start();
-
-		mydialog2.setVisible(true);
-		System.out.println("OK2");
-		*/
-		
-		// creating a JFrame, adding a button, and then displaying the first dialog you
+		// creating a JFrame, adding a button, and then displaying the first dialog I
 		// created yesterday when the button is pushed
 		// create a Frame with title and exit when close
-		JFrame myframe = new JFrame("this is a frame title");
+		JFrame myframe = new JFrame("this is the title of the frame");
 		myframe.setMinimumSize(new Dimension(500, 300));
 		
 		// Create a menu bar
 		JMenuBar menuBar = new JMenuBar();
-		
 		//Build the first menu.
 		JMenu menu = new JMenu("Menu");
 		menu.setMnemonic(KeyEvent.VK_A);
 		menu.getAccessibleContext().setAccessibleDescription(
 		        "The only menu in this program that has menu items");
 		menuBar.add(menu);
-
 		//a group of JMenuItems
 		JMenuItem menuItem = new JMenuItem("A text-only menu item",
 		                         KeyEvent.VK_T);
@@ -154,17 +118,60 @@ public class DialogModalTest implements ActionListener, ItemListener {
 		JDialog mydialog1 = pane1.createDialog("Dialog");
 		mydialog1.setModalityType(ModalityType.APPLICATION_MODAL);
 		
-		
-		// add checkbox
-		JCheckBox 
-		
-		
-		
+
+		DialogModalTest a = new DialogModalTest(myframe, mydialog1);
+		//DialogModalTest b = new DialogModalTest(myframe, mydialog1);
+
 		// create actionListener
-		button.addActionListener(
-			new DialogModalTest(myframe, mydialog1)
-		);
+		button.addActionListener(a);
+		//checkbox.addItemListener(a);
+		
+		createAndShowGUI();
 	}
+	
+	public void CheckBox() {
+		JFrame myframe = new JFrame("this is the title of the frame");
+		myframe.setMinimumSize(new Dimension(500, 300));
+
+		// create CheckBox
+		JCheckBox SnowButton = new JCheckBox("Snow");
+		SnowButton.setMnemonic(KeyEvent.VK_C);
+		SnowButton.setSelected(true);
+
+		JCheckBox RainButton = new JCheckBox("Rain");
+		RainButton.setMnemonic(KeyEvent.VK_C);
+		RainButton.setSelected(true);
+
+		JCheckBox SunshineButton = new JCheckBox("Sunshine");
+		SunshineButton.setMnemonic(KeyEvent.VK_C);
+		SunshineButton.setSelected(true);
+
+		// Register a listener for the check boxes.
+		SnowButton.addItemListener(this);
+		RainButton.addItemListener(this);
+		SunshineButton.addItemListener(this);
+
+		// Indicates what's on the geek.
+		choices = new StringBuffer("sru");
+
+		// Put the check boxes in a column in a panel
+		JPanel checkPanel = new JPanel(new GridLayout(0, 1));
+		checkPanel.add(SnowButton);
+		checkPanel.add(RainButton);
+		checkPanel.add(SunshineButton);
+
+		// Create and set up the content pane.
+		JComponent newContentPane = new JCheckBox();
+		newContentPane.setOpaque(true); // content panes must be opaque
+		myframe.setContentPane(newContentPane);
+
+		// Display the window.
+		myframe.pack();
+		myframe.setVisible(true);
+
+	}
+
+
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -172,6 +179,56 @@ public class DialogModalTest implements ActionListener, ItemListener {
 		myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		myDialog1.setVisible(true);
 	}
-		
+	
+    
+	 /** Listens to the check boxes. */
+    public void itemStateChanged(ItemEvent e) {
+        int index = 0;
+        char c = '-';
+        Object source = e.getItemSelectable();
+
+        if (source == SnowButton) {
+            index = 0;
+            c = 's';
+        } else if (source == RainButton) {
+            index = 1;
+            c = 'r';
+        } else if (source == SunshineButton) {
+            index = 2;
+            c = 'u';
+        }
+        
+      //Now that we know which button was pushed, find out
+        //whether it was selected or deselected.
+        if (e.getStateChange() == ItemEvent.DESELECTED) {
+            c = '-';
+        }
+
+        //Apply the change to the string.
+        choices.setCharAt(index, c);
+    }
+    
+    /**
+     * Create the GUI and show it.  For thread safety,
+     * this method should be invoked from the
+     * event-dispatching thread.
+     */
+    
+    private static void createAndShowGUI() {
+        //Create and set up the window.
+		JFrame myframe = new JFrame("WeatherCheckBox");
+		myframe.setMinimumSize(new Dimension(500, 300));
+		myframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		  //Create and set up the content pane.
+        JComponent newContentPane = new JCheckBox();
+        newContentPane.setOpaque(true); //content panes must be opaque
+        myframe.setContentPane(newContentPane);
+
+		// Display the window.
+		myframe.pack();
+		myframe.setVisible(true);
+    }
+    
 }
 
