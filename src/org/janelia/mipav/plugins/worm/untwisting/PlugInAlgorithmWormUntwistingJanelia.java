@@ -65,7 +65,6 @@ import java.util.Vector;
 
 import javax.swing.JProgressBar;
 
-import org.janelia.mipav.test.FileOutputStreamDemo;
 import org.janelia.mipav.test.BatchProcessLogFrame;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -495,8 +494,6 @@ public class PlugInAlgorithmWormUntwistingJanelia
 		}
 	}
 	
-
-
 	/**
 	 * Run the lattice-based worm straightening algorithm for the list of input files.
 	 * @param batchProgress progress bar (may be null).
@@ -661,8 +658,6 @@ public class PlugInAlgorithmWormUntwistingJanelia
 		System.err.println( "straighten elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
 		MipavUtil.displayInfo( "Lattice straightening complete." );
 		
-	//	MipavUtil.displayInfo( outputWriter.toString() + "\n" + "***  <DuplicatedAnnotation.txt>  is saved to:   " + System.getProperty("user.dir") + "\n" + "outputDirectory: "+ outputDirectory);
-		FileOutputStreamDemo.writeToFile( outputWriter.toString() );
 		BatchProcessLogFrame message = new BatchProcessLogFrame();
 		message.appendMessage(outputWriter.toString());
 		message.setCurrentDirectory(outputDirectory + File.separator + "straightened_annotations");
@@ -1116,7 +1111,6 @@ public class PlugInAlgorithmWormUntwistingJanelia
 			pad.run();
 			regInput = padResult;
 
-			// this is a tests
 			pad.finalize();
 			pad = null;
 		}
