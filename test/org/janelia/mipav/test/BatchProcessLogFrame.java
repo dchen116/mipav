@@ -185,12 +185,4 @@ public class BatchProcessLogFrame implements ActionListener {
 		directory = new File(opDirectory);
 		fileChooser.setCurrentDirectory(directory);
 	}
-/*
-	public static void main(String[] arg) {
-		BatchProcessLogFrame fda = new BatchProcessLogFrame();
-		fda.appendMessage("duplicate annotations");
-		//fda.appendMessage("");
-		// fda.setCurrentDirectory("C:\\Users\\chend\\Desktop");
-	}
-*/
 }
