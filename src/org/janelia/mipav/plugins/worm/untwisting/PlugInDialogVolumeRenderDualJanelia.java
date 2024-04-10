@@ -3517,7 +3517,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		//from online jhonny: X:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
 		//String access_path = "X:\\shrofflab\\Vab-1\\Tracking\\Pos0\\SPIMB\\Reg_Sample\\For_Tracking";
 		
-		String access_path = "E:\\Diyi\\SPIMB\\Reg_Sample\\For_Tracking";
+		//String access_path = "E:\\Diyi\\SPIMB\\Reg_Sample\\For_Tracking";
+		String access_path = "D:\\shroff\\For_Tracking";
 
 		baseFileLocText.setText(access_path);
 		editLattice.setSelected(true);
