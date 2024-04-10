@@ -109,12 +109,17 @@ public class LatticeModel {
 		return false;
 	}
 
+	public static VOI readAnnotationsCSV( String fileName)
+	{
+		return readAnnotationsCSV(fileName, null);
+	}
+	
 	/**
 	 * Read a list of annotations from a CSV file: name,x,y,z,radius (optional)
 	 * @param fileName
 	 * @return VOI containing list of annotations.
 	 */
-	public static VOI readAnnotationsCSV( String fileName )
+	public static VOI readAnnotationsCSV( String fileName, StringBuilder outputWriter )
 	{
 		File file = new File(fileName);
 		if ( file.exists() )
@@ -204,7 +209,12 @@ public class LatticeModel {
 				}
 				if ( renameString.length() > 0 ) {
 					//TODO: add flag to not warn on duplicate annotations
-					MipavUtil.displayError( "Duplicate annotations:\n" + renameString );
+					
+					String errorMsg = "Duplicate annotations:\n" + renameString + "\n in file " + fileName + "\n\n";
+					if(outputWriter == null)
+						MipavUtil.displayError( errorMsg);
+					else
+						outputWriter.append(errorMsg + "\n");
 				}
 				fr.close();
 				if ( count > 1 )
@@ -393,7 +403,16 @@ public class LatticeModel {
 		LatticeModel.saveAnnotationsAsCSV(dir,fileName, annotations, false);
 	}
 	
+	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations, StringBuilder outputWriter) {
+		// TODO Auto-generated method stub
+		saveAnnotationsAsCSV(dir,fileName, annotations, false, outputWriter);
+	}
+
 	
+	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations, boolean isCurve )
+	{
+		saveAnnotationsAsCSV(dir, fileName, annotations, isCurve, null);
+	}
 	
 	/**
 	 * Saves the input annotations to the CSV file in the following format:
@@ -402,10 +421,10 @@ public class LatticeModel {
 	 * @param fileName
 	 * @param annotations
 	 */
-	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations, boolean isCurve )
+	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations, boolean isCurve, StringBuilder outputWriter )
 	{		
 		// load the existing annotation file - use it to determine which annotations need untwisting.
-		VOI originalAnnotation = LatticeModel.readAnnotationsCSV(dir + File.separator + fileName );
+		VOI originalAnnotation = LatticeModel.readAnnotationsCSV(dir + File.separator + fileName, outputWriter);
 //		System.err.println("saveAnnotationsAsCSV reading orig: " + (dir + File.separator + fileName));
 
 		if ( originalAnnotation != null ) {

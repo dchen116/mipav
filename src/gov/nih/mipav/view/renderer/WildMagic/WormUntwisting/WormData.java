@@ -115,11 +115,15 @@ public class WormData
 	public static String getStraightAnnotationsPath(String outputDirectory) {
 		return (outputDirectory + File.separator + straightenedAnnotations + File.separator + "straightened_annotations.csv");
 	}
-
 	public static VOI getIntegratedMarkerAnnotations(String outputDirectory)
 	{
+		return getIntegratedMarkerAnnotations(outputDirectory, null);
+	}
+
+	public static VOI getIntegratedMarkerAnnotations(String outputDirectory, StringBuilder outputWriter)
+	{
 		System.err.println("getIntegratedMarkerAnnotations");
-		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + integratedAnnotationOutput + File.separator + "annotations.csv");
+		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + integratedAnnotationOutput + File.separator + "annotations.csv", outputWriter);
 
 		if ( markerAnnotations == null )
 			markerAnnotations = new VOI( (short)0, "annotationVOIs", VOI.ANNOTATION, 0 );
