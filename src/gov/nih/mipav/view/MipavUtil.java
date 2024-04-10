@@ -461,8 +461,6 @@ public class MipavUtil extends JComponent {
         }
 
     }
-    
-
 
     /**
      * Pops up a message dialog to display information.
