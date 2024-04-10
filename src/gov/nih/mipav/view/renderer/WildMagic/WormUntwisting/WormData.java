@@ -4,7 +4,6 @@ import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.Color;
