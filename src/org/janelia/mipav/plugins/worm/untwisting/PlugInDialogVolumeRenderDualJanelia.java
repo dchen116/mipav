@@ -3402,41 +3402,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				}
 			}
 		} 
-/*
-		public void actionPerformed(ActionEvent event) {
-			String command = event.getActionCommand();
-			Object source = event.getSource();
-
-			System.err.println("UntwistDialog " + command);
-			if ( command.equals("Cancel") ) {
-				baseFileLocText.setText("");
-				latticeOutputDir = null;
-				setVisible(false);
-			}
-			else if ( command.equals("OK") ) {
-				int count = 0;
-				for ( int i = 0; i < volumeChecks.length; i++ ) {
-					if ( volumeChecks[i].isSelected() ) {
-						count++;
-					}
-				}
-				if ( count == 0 ) {
-					baseFileLocText.setText("");
-					latticeOutputDir = null;
-				}
-				else {
-					baseFileDir = new String[count];
-					count = 0;
-					for ( int i = 0; i < volumeChecks.length; i++ ) {
-						if ( volumeChecks[i].isSelected() ) {
-							baseFileDir[count++] = volumeDirs[i];
-						}
-					}
-				}
-				setVisible(false);
-			}
-		}
-		*/
 		
 		// Diyi: Created a simpler version of actionPerformed to replace the previous one
 		public void actionPerformed(ActionEvent event) {
@@ -3604,81 +3569,5 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		
 		actionPerformed(new ActionEvent(this, 0, "start"));
 	}
-	
-	public void setDemoValuesDupError() {
-		//baseFileLocText.setText("\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking");
-		// X:\shrofflab\RW10752_NU\Untwisting\031219_RW10752_NU\RW10752_NU\RW10752_NU\Pos2\Decon_registered
-		
-		//diyi local test path: E:\Diyi\Pos2\Decon_registered
-		//String access_path = "E:\\Diyi\\Pos2\\Decon_registered";
-		
-		//from diyi error mimic path:    X:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB
-		//from jhonny:Z:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
-		//copied to diyi from jhonny: E:\Diyi\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
-		
-		//from online:\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking
-		//String access_path = "\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking";
-		
-		//from online jhonny: X:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
-		//String access_path = "X:\\shrofflab\\Vab-1\\Tracking\\Pos0\\SPIMB\\Reg_Sample\\For_Tracking";
-		
-		//path to open the actual system(JaneliaWormUntwistingDemo): String access_path = "E:\\Diyi\\SPIMB\\Reg_Sample\\For_Tracking";
-		
-		//path to open the system that repeat the duplication error (AutomateDupError): String access_path = "E:\\Diyi\\Pos3\\SPIMB\\Registred_Volumes\\For_Tracking";
-		String access_path = "E:\\Diyi\\Pos3\\SPIMB\\Registered_Volumes\\For_Tracking";
-		
-		baseFileLocText.setText(access_path);
-		editLattice.setSelected(true);
-		//actionPerformed(new ActionEvent(this, 0, "BrowseConclude"));
-		
-		String[] volumeDirs;
-		
-		String baseDir = baseFileLocText.getText();
-		File file = new File(baseDir);
-		
-		final String[] list = file.list();
-		Vector<String> tempList = new Vector<String>();
-		for (int i = 0; i < list.length; i++) {
-			File subDir = new File(file.getAbsolutePath() + File.separator + list[i]);
-			if ( subDir.exists() && subDir.isDirectory() ) 
-			{	
-				System.err.println(file.getAbsolutePath() + File.separator + list[i]);
-				if (list[i].equals("RegA") || list[i].equals("RegB"))
-				{
-					tempList.add(list[i]);
-				}
-			}
-		}
-		
-		volumeDirs = new String[tempList.size()];
-		
-		int count = 0;
-		for ( int i = 0; i < volumeDirs.length; i++ ) {
-				count++;
-			volumeDirs[i] = new String(baseDir + File.separator + tempList.elementAt(i));
-		}
-		if ( count == 0 ) {
-			baseFileLocText.setText("");
-			//latticeOutputDir = null;
-		}
-		else {
-			baseFileDir = new String[count];
-			count = 0;
-			for ( int i = 0; i < volumeDirs.length; i++ ) {
-				baseFileDir[count++] = volumeDirs[i];
-			}
-		}
-
-		//baseFileLocText.setText("\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking\\RegB");
-
-		latticeFileDir = new String(access_path + "\\RegB");
-		setDefaultInputList(latticeFileDir);
-		rangeFusionText.setText("45-46");
-		
-		latticeStraighten.doClick();
-		
-		actionPerformed(new ActionEvent(this, 0, "start"));
-	}
-
 }
 
