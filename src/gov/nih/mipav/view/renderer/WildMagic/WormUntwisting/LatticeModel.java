@@ -233,8 +233,6 @@ public class LatticeModel {
 		return null;
 	}
 
-
-
 	public static VOIVector readLatticeCSV(String fileName) {
 		return readLatticeCSV(fileName, false);
 	}
