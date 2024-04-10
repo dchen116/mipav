@@ -25,7 +25,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 public class BatchProcessLogFrame implements ActionListener {
-
 	// add variables here
 	JFrame frame;
 	JButton buttonOk, buttonCopyAll, buttonBrowse;
