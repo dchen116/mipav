@@ -180,7 +180,7 @@ public class MipavUtil extends JComponent {
     /** DOCUMENT ME! */
     public static int MENU_Y_PADDING = 27;
 
-    public static boolean forceQuiet = false;
+    private static boolean forceQuiet = false;
 
     /** DOCUMENT ME! */
     public static final int[] functionKeys = new int[] {0, KeyEvent.VK_F1, KeyEvent.VK_F2, KeyEvent.VK_F3, KeyEvent.VK_F4, KeyEvent.VK_F5, KeyEvent.VK_F6,
@@ -462,52 +462,6 @@ public class MipavUtil extends JComponent {
 
     }
     
-    public static void displayErrorNotModal(final String error) {
-        if ( !MipavUtil.forceQuiet && !GraphicsEnvironment.isHeadless()) {
-            if ( (ViewUserInterface.getReference() != null)
-                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference().isPlugInFrameVisible())) {
-
-                try {
-                    JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-                    JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
-                } catch (final FileNotFoundException ex) {
-                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n",
-                            Preferences.DEBUG_FILEIO);
-                    System.err.println("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n");
-                }
-            } else {
-
-                if (ViewUserInterface.getReference() != null) {
-
-                    // the user has enabled the -hide option
-                    System.err.println("Error: " + error);
-
-                    // exit with an abnormal return value to indicate a problem
-                    // (useful when running mipav from the command line and testing
-                    // whether the algorithm completed successfully)
-                    if (ViewUserInterface.getReference().doExitCmdLineOnError()) {
-                        System.exit(1);
-                    }
-                } else {
-
-                    try {
-
-                        // an error occurred before the ui could be set up, so assume that the user is not using -hide..
-                        JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-                        JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
-                    } catch (final FileNotFoundException ex) {
-                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n",
-                                Preferences.DEBUG_FILEIO);
-                        System.err.println("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n");
-                    }
-                }
-            }
-        } else {
-            System.err.println("Error: " + error);
-            System.exit(1);
-        }
-
-    }
 
 
     /**
