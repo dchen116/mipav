@@ -131,7 +131,6 @@ public class BatchProcessLogFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		System.out.println("Action performed");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		String data = textArea.getText().trim(); // read contents of text area into 'data'
