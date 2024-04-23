@@ -4,10 +4,10 @@ package org.janelia.mipav.test;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class valueOutput {
+public class ValueOutput {
     private FileWriter fileWriter;
 
-    public valueOutput(String fileName) {
+    public ValueOutput(String fileName) {
         try {
 			this.fileWriter = new FileWriter(fileName);
 	        // Writing the header

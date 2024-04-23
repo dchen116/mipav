@@ -61,7 +61,7 @@ import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.KeyStroke;
 
-import org.janelia.mipav.test.valueOutput;
+import org.janelia.mipav.test.ValueOutput;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Mathf;
@@ -846,7 +846,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		m_bMouseDrag = false;
 	}
 	
-	private void PickVolume3D(Vector3f kPos, Vector3f kDir, Vector3f maxPt) 
+	private void PickVolume3D(Vector3f kPos, Vector3f kDir, Vector3f maxPtAccurate) 
 	{
 		m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
 				Float.MAX_VALUE);
@@ -860,8 +860,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			float distances[] = new float[m_kPicker.Records.size()];
 			
 			long time = System.currentTimeMillis();
-			valueOutput output = new valueOutput("output" + time + ".csv");
-			valueOutput outputOld = new valueOutput("outputOld" + time + ".csv");
+			ValueOutput outputAccurate = new ValueOutput("outputAccurate" + time + ".csv");
+			ValueOutput output = new ValueOutput("output" + time + ".csv");
 			
 			for ( int i = 0; i < m_kPicker.Records.size(); i++ )
 			{
@@ -885,9 +885,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				firstIntersectionPoint.copy(pickedPoints[0]);
 				secondIntersectionPoint.copy(pickedPoints[1]);
 				
+				float maxValueAccurate = -Float.MAX_VALUE;
 				float maxValue = -Float.MAX_VALUE;
-				float maxValueOld = -Float.MAX_VALUE;
-				Vector3f maxPtOld = new Vector3f(); 
+				Vector3f maxPt = new Vector3f(); 
 				
 				Vector3f p0 = new Vector3f(firstIntersectionPoint);
 				Vector3f p1 = new Vector3f(secondIntersectionPoint);
@@ -967,12 +967,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 						// Only one imageA:
 						value = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
 					}
-					if ( value > maxValueOld )
+					if ( value > maxValue )
 					{
-						maxValueOld = value;
-						maxPtOld.copy(p0);
+						maxValue = value;
+						maxPt.copy(p0);
 					}
-					outputOld.writeData(p0.X, p0.Y, p0.Z, value);			
+					output.writeData(p0.X, p0.Y, p0.Z, value);			
 					
 					// Old Mipav but more accurate click
 					value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
@@ -984,33 +984,33 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					}
 					
 					
-					if ( value > maxValue )
+					if ( value > maxValueAccurate )
 					{
-						maxValue = value;
-						maxPt.copy(p0);
+						maxValueAccurate = value;
+						maxPtAccurate.copy(p0);
 					}
 					// Write data to CSV
-		            output.writeData(p0.X, p0.Y, p0.Z, value);					
+		            outputAccurate.writeData(p0.X, p0.Y, p0.Z, value);					
 				}
 
-				outputOld.writeData(maxPtOld.X, maxPtOld.Y, maxPtOld.Z, maxValueOld);
 				output.writeData(maxPt.X, maxPt.Y, maxPt.Z, maxValue);
+				outputAccurate.writeData(maxPtAccurate.X, maxPtAccurate.Y, maxPtAccurate.Z, maxValueAccurate);
 				
 	         // Close the output stream
+		        outputAccurate.close();
 		        output.close();
-		        outputOld.close();
 					
-				if ( maxValue != -Float.MAX_VALUE )
+				if ( maxValueAccurate != -Float.MAX_VALUE )
 				{					
 					boolean picked = false;
 //					System.err.println( "mouse drag? " + m_bMouseDrag );
 					if ( !m_bMouseDrag ) {
 						// select or create a new marker:
-						picked = select3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt, rightMousePressed, altPressed );
+						picked = select3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPtAccurate, rightMousePressed, altPressed );
 					}
 					else if ( m_bMouseDrag ) {
 						// modify currently selected, if exists
-						picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt );	
+						picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPtAccurate );	
 					}
 					if ( !picked )
 					{
@@ -1019,8 +1019,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 						int colorID = 0;
 						VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
 						VOIText textVOI = new VOIText( );
-						textVOI.add( maxPt );
-						textVOI.add( maxPt );
+						textVOI.add( maxPtAccurate );
+						textVOI.add( maxPtAccurate );
 //						Transformation world = m_kVolumeRayCast.getMesh().World;
 //						Vector3f dir = world.InvertVector(m_spkCamera.GetRVector());
 //						dir.scale(5);
