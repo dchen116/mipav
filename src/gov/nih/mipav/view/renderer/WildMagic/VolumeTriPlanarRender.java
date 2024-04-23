@@ -61,6 +61,8 @@ import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.KeyStroke;
 
+import org.janelia.mipav.test.valueOutput;
+
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
@@ -857,6 +859,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			Vector3f pickedPoints[] = new Vector3f[m_kPicker.Records.size()];
 			float distances[] = new float[m_kPicker.Records.size()];
 			
+			long time = System.currentTimeMillis();
+			valueOutput output = new valueOutput("output" + time + ".csv");
+			valueOutput outputOld = new valueOutput("outputOld" + time + ".csv");
+			
 			for ( int i = 0; i < m_kPicker.Records.size(); i++ )
 			{
 				PickRecord kPickPoint = m_kPicker.Records.elementAt(i);
@@ -880,6 +886,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				secondIntersectionPoint.copy(pickedPoints[1]);
 				
 				float maxValue = -Float.MAX_VALUE;
+				float maxValueOld = -Float.MAX_VALUE;
+				Vector3f maxPtOld = new Vector3f(); 
 				
 				Vector3f p0 = new Vector3f(firstIntersectionPoint);
 				Vector3f p1 = new Vector3f(secondIntersectionPoint);
@@ -959,13 +967,39 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 						// Only one imageA:
 						value = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
 					}
+					if ( value > maxValueOld )
+					{
+						maxValueOld = value;
+						maxPtOld.copy(p0);
+					}
+					outputOld.writeData(p0.X, p0.Y, p0.Z, value);			
+					
+					// Old Mipav but more accurate click
+					value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+					if ( (m_kVolumeImageB != null) &&  (m_kVolumeImageB.GetImage() != null))
+					{
+						float valueB = m_kVolumeImageB.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+						float blend = getABBlend();
+						value = (blend * value + (1 - blend) * valueB);
+					}
+					
+					
 					if ( value > maxValue )
 					{
 						maxValue = value;
 						maxPt.copy(p0);
 					}
+					// Write data to CSV
+		            output.writeData(p0.X, p0.Y, p0.Z, value);					
 				}
+
+				outputOld.writeData(maxPtOld.X, maxPtOld.Y, maxPtOld.Z, maxValueOld);
+				output.writeData(maxPt.X, maxPt.Y, maxPt.Z, maxValue);
 				
+	         // Close the output stream
+		        output.close();
+		        outputOld.close();
+					
 				if ( maxValue != -Float.MAX_VALUE )
 				{					
 					boolean picked = false;

@@ -944,6 +944,7 @@ public class VolumeImage implements Serializable {
 	public ModelRGB GetRGB() {
 		return m_kRGBT;
 	}
+	
 
 	public float GetTransferedValue( int x, int y, int z )
 	{
@@ -985,6 +986,7 @@ public class VolumeImage implements Serializable {
 		}
 		return -1;
 	}
+	
 	
 	
 	/**
