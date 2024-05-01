@@ -1120,11 +1120,33 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 	}
 	
+	
+	private boolean accurateMode = true;
+	
+    public boolean isAccurateMode() {
+        return accurateMode;
+    }
+
+    public void toggleAccurateMode() {
+        accurateMode = !accurateMode;
+        System.out.println("Toggle Accurate Mode: " + accurateMode);
+    }
+
+	
+
 	public void keyReleased(KeyEvent e) {
 		isShiftSelected = e.isShiftDown();
 		movingPickedPoint = false;
-		if(editingCrossSections) {		
-			switch(e.getKeyChar()) {
+
+		System.out.println(e.getKeyChar());
+		
+		if (e.getKeyCode() == KeyEvent.VK_M) {
+			toggleAccurateMode();
+			System.out.println("Mode changed. Accurate mode is now " + (isAccurateMode() ? "enabled" : "disabled"));
+		}
+
+		if (editingCrossSections) {
+			switch (e.getKeyChar()) {
 			case '+':
 				latticeModel.decreaseCrossSectionSamples();
 				break;
@@ -1155,7 +1177,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			case 'R':
 				latticeModel.showLattice(false);
 				latticeModel.resetCrossSections();
-				if(editingCrossSections) {
+				if (editingCrossSections) {
 					latticeModel.showLattice(true);
 				}
 				break;
@@ -1168,46 +1190,40 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			}
 		}
 	}
-	
 
-	public static VOIBase findNearestAnnotation( final VOI annotations, final Vector3f startPt, final Vector3f endPt, final Vector3f pt ) {
+	public static VOIBase findNearestAnnotation(final VOI annotations, final Vector3f startPt, final Vector3f endPt,
+			final Vector3f pt) {
 		int pickedAnnotation = -1;
 		float minDist = Float.MAX_VALUE;
-		for ( int i = 0; i < annotations.getCurves().size(); i++ )
-		{
+		for (int i = 0; i < annotations.getCurves().size(); i++) {
 			final Vector3f annotationPt = annotations.getCurves().elementAt(i).elementAt(0);
 			final float distance = pt.distance(annotationPt);
-			if ( distance < minDist )
-			{
+			if (distance < minDist) {
 				minDist = distance;
-				if ( minDist <= 12 )
-				{
+				if (minDist <= 12) {
 					pickedAnnotation = i;
 				}
 			}
 		}
 //		System.err.println("findNearestAnnotation " + minDist + "  " + pickedAnnotation );
-		if ( (pickedAnnotation == -1) && (startPt != null) && (endPt != null) )
-		{
+		if ((pickedAnnotation == -1) && (startPt != null) && (endPt != null)) {
 			minDist = Float.MAX_VALUE;
 			// look at the vector under the mouse and see which lattice point is closest...
 			final Segment3f mouseVector = new Segment3f(startPt, endPt);
-			for ( int i = 0; i < annotations.getCurves().size(); i++ )
-			{
-				DistanceVector3Segment3 dist = new DistanceVector3Segment3(annotations.getCurves().elementAt(i).elementAt(0), mouseVector);
+			for (int i = 0; i < annotations.getCurves().size(); i++) {
+				DistanceVector3Segment3 dist = new DistanceVector3Segment3(
+						annotations.getCurves().elementAt(i).elementAt(0), mouseVector);
 				float distance = dist.Get();
-				//					System.err.println( i + " " + distance );
-				if ( distance < minDist )
-				{
+				// System.err.println( i + " " + distance );
+				if (distance < minDist) {
 					minDist = distance;
-					if ( minDist <= 12 )
-					{
+					if (minDist <= 12) {
 						pickedAnnotation = i;
 					}
 				}
 			}
 		}
-		if ( pickedAnnotation != -1 ) {
+		if (pickedAnnotation != -1) {
 			return annotations.getCurves().elementAt(pickedAnnotation);
 		}
 		return null;

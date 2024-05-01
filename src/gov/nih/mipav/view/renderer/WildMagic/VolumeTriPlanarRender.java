@@ -939,80 +939,85 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							continue;
 						}
 					}
-					float value = 0;
-					int sampleX = Math.round(p0.X);
-					int sampleY = Math.round(p0.Y);
-					int sampleZ = Math.round(p0.Z);
-					// loop over imageA, imageB, hyperstack, get value, apply color & opacity for 'value'
-					// take the maximum value:
-					if ( hyperstack != null ) {
-						for ( int h = 0; h < hyperstack.length; h++ ) {
-							if ( (hyperstack[h] != null) && (hyperstack[h].GetImage() != null) )
-							{
-								if ( m_kVolumeRayCast.getImageOn(h) )
-								{
-									value = Math.max(value, hyperstack[h].GetTransferedValue(sampleX, sampleY, sampleZ));
+					
+
+					// Two modes can be switched from the accurate mode to the 3-color mode(not working currently) by press key "M" or "m"
+					if (m_kVOIInterface.isAccurateMode()) {
+						// Old Mipav but more accurate click
+						float valueAccurate = 0;
+						valueAccurate = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+						if ((m_kVolumeImageB != null) && (m_kVolumeImageB.GetImage() != null)) {
+							float valueB = m_kVolumeImageB.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+							float blend = getABBlend();
+							valueAccurate = (blend * valueAccurate + (1 - blend) * valueB);
+						}
+
+						if (valueAccurate > maxValueAccurate) {
+							maxValueAccurate = valueAccurate;
+							maxPtAccurate.copy(p0);
+						}
+						// Write data to CSV
+						outputAccurate.writeData(p0.X, p0.Y, p0.Z, valueAccurate);
+					
+					} else {
+						//this is not working, made for more than 3 colors. -Diyi Chen May 1, 2024
+						float value = 0;
+						int sampleX = Math.round(p0.X);
+						int sampleY = Math.round(p0.Y);
+						int sampleZ = Math.round(p0.Z);
+						// loop over imageA, imageB, hyperstack, get value, apply color & opacity for
+						// 'value'
+						// take the maximum value:
+						if (hyperstack != null) {
+							for (int h = 0; h < hyperstack.length; h++) {
+								if ((hyperstack[h] != null) && (hyperstack[h].GetImage() != null)) {
+									if (m_kVolumeRayCast.getImageOn(h)) {
+										value = Math.max(value,
+												hyperstack[h].GetTransferedValue(sampleX, sampleY, sampleZ));
+									}
 								}
 							}
+						} else if ((m_kVolumeImageB != null) && (m_kVolumeImageB.GetImage() != null)) {
+							float valueA = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
+							float valueB = m_kVolumeImageB.GetTransferedValue(sampleX, sampleY, sampleZ);
+							float blend = getABBlend();
+							value = (blend * valueA + (1 - blend) * valueB);
+						} else {
+							// Only one imageA:
+							value = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
 						}
+						if (value > maxValue) {
+							maxValue = value;
+							maxPt.copy(p0);
+						}
+						output.writeData(p0.X, p0.Y, p0.Z, value);
 					}
-					else if ( (m_kVolumeImageB != null) &&  (m_kVolumeImageB.GetImage() != null)) {
-						float valueA = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
-						float valueB = m_kVolumeImageB.GetTransferedValue(sampleX, sampleY, sampleZ);
-						float blend = getABBlend();
-						value = (blend * valueA + (1 - blend) * valueB);
-					}
-					else
-					{
-						// Only one imageA:
-						value = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
-					}
-					if ( value > maxValue )
-					{
-						maxValue = value;
-						maxPt.copy(p0);
-					}
-					output.writeData(p0.X, p0.Y, p0.Z, value);			
-					
-					// Old Mipav but more accurate click
-					value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
-					if ( (m_kVolumeImageB != null) &&  (m_kVolumeImageB.GetImage() != null))
-					{
-						float valueB = m_kVolumeImageB.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
-						float blend = getABBlend();
-						value = (blend * value + (1 - blend) * valueB);
-					}
-					
-					
-					if ( value > maxValueAccurate )
-					{
-						maxValueAccurate = value;
-						maxPtAccurate.copy(p0);
-					}
-					// Write data to CSV
-		            outputAccurate.writeData(p0.X, p0.Y, p0.Z, value);					
 				}
 
 				output.writeData(maxPt.X, maxPt.Y, maxPt.Z, maxValue);
 				outputAccurate.writeData(maxPtAccurate.X, maxPtAccurate.Y, maxPtAccurate.Z, maxValueAccurate);
+
+				// Close the output stream
+				outputAccurate.close();
+				output.close();
 				
-	         // Close the output stream
-		        outputAccurate.close();
-		        output.close();
-					
-				if ( maxValueAccurate != -Float.MAX_VALUE )
-				{					
+				if (!m_kVOIInterface.isAccurateMode()) {
+					maxValueAccurate = maxValue;
+					maxPtAccurate.copy(maxPt);
+				}
+
+				if (maxValueAccurate != -Float.MAX_VALUE) {
 					boolean picked = false;
 //					System.err.println( "mouse drag? " + m_bMouseDrag );
-					if ( !m_bMouseDrag ) {
+					if (!m_bMouseDrag) {
 						// select or create a new marker:
-						picked = select3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPtAccurate, rightMousePressed, altPressed );
-					}
-					else if ( m_bMouseDrag ) {
+						picked = select3DMarker(firstIntersectionPoint, secondIntersectionPoint, maxPtAccurate,
+								rightMousePressed, altPressed);
+					} else if (m_bMouseDrag) {
 						// modify currently selected, if exists
-						picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPtAccurate );	
+						picked = modify3DMarker(firstIntersectionPoint, secondIntersectionPoint, maxPtAccurate);
 					}
-					if ( !picked )
+					if (!picked)
 					{
 						// add a new picked point:
 						short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
@@ -1052,7 +1057,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				}
 			}
 		}	
-	}
+}
 	
 	private boolean PickSlice3D(Vector3f kPos, Vector3f kDir, Vector3f maxPt) 
 	{
