@@ -2309,7 +2309,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
 		tabbedPane.addTab("Clip", null, clipPanel);
-		tabbedPane.addTab("AccurateMode", null, accuratePanel);
+		tabbedPane.addTab("Selection", null, accuratePanel);
 		tabbedPane.setVisible(false);
 		tabbedPane.addChangeListener(this);
 
