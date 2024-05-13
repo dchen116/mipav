@@ -2298,7 +2298,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
                 boolean isSelected = toggleButton.isSelected();
                activeImage.voiManager.toggleAccurateMode();
 		    }
-		    
 		}); 
 		
 		// Add the accurateModeButton to the buttonPanel, then add the buttonPanel to the accuratePanel
