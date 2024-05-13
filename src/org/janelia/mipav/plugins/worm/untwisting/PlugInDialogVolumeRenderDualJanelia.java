@@ -111,6 +111,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -135,7 +136,7 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 * processes. Provides framework for animating the annotations after untwisting.
 */
 public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements ActionListener, RendererListener,
-		PropertyChangeListener, ViewImageUpdateInterface, WindowListener, ChangeListener {
+		PropertyChangeListener, ViewImageUpdateInterface, WindowListener, ChangeListener, AccurateModeListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
@@ -215,6 +216,9 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 	private JPanel opacityPanel;
 	private JTabbedPane opacityTab;
 	private JPanel clipPanel;
+	private JPanel accuratePanel;
+	//private JButton accurateModeButton;
+	private JToggleButton accurateModeButton;
 
 	private PlugInDialogVolumeRenderDualJanelia parent;
 	private JTextField rangeFusionText;
@@ -1132,9 +1136,11 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		lutPanel.removeAll();
 		opacityPanel.removeAll();
 		clipPanel.removeAll();
+		accuratePanel.removeAll();
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
 		tabbedPane.addTab("Clip", null, clipPanel);
+		tabbedPane.addTab("AccurateMode", null, accuratePanel);
 		tabbedPane.addChangeListener(this);
 
 		startButton.setEnabled(true);
@@ -1317,6 +1323,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 //			activeImage.volumeImage.UpdateImages(LUTa);
 //		}
 		return false;
+	}
+	
+	
+	 @Override
+	public void accurateModeChanged(boolean isAccurateMode) {
+		 accurateModeButton.setSelected(isAccurateMode);
+		accurateModeButton.setText(isAccurateMode ? "Accurate Mode is now On" : "Accurate Mode is now Off");
 	}
 
 	@Override
@@ -1714,6 +1727,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					leftImage.volumeImage = leftImage.hyperstack[0]; //new VolumeImage(false, leftImage.wormImage, "A", null, 0, false);
 					leftImage.voiManager = new VOILatticeManagerInterface(null, leftImage.volumeImage.GetImage(), null,
 							0, true, null);
+					leftImage.voiManager.addAccurateModeListener(this);
 					
 					byte[] aucData = new byte[256 * 4 * images.length];
 					GraphicsImage cmImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, images.length, aucData, new String("colormap" + leftImage.volumeImage.GetImage().getImageFileName()));
@@ -2263,12 +2277,40 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		opacityTab = new JTabbedPane();
 		opacityTab.addChangeListener(this);
 		opacityPanel.add(opacityTab, BorderLayout.CENTER);
-		
 		clipPanel = new JPanel( new BorderLayout() );
+		
+		//added a panel with button to be able to turn off accurate mode and switch to 3-color mode(not working currently)
+		accuratePanel = new JPanel(new BorderLayout());
+		JPanel buttonPanel = new JPanel(); 
+		//accurateModeButton = new JButton("Accurate Mode");
+		accurateModeButton = new JToggleButton("Accurate Mode");
+		accurateModeChanged(true);
+		accurateModeButton.setPreferredSize(new Dimension(200, 50));
+
+		
+		// Add an action response to the button 
+		accurateModeButton.addActionListener(new ActionListener() {
+		    @Override
+		    public void actionPerformed(ActionEvent e) {
+		       // activeImage.voiManager.toggleAccurateMode();
+		        
+		        JToggleButton toggleButton = (JToggleButton) e.getSource();
+                boolean isSelected = toggleButton.isSelected();
+               activeImage.voiManager.toggleAccurateMode();
+		    }
+		    
+		}); 
+		
+		// Add the accurateModeButton to the buttonPanel, then add the buttonPanel to the accuratePanel
+		buttonPanel.add(accurateModeButton);
+		accuratePanel.add(buttonPanel, BorderLayout.CENTER);
+
+		
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
 		tabbedPane.addTab("Clip", null, clipPanel);
+		tabbedPane.addTab("AccurateMode", null, accuratePanel);
 		tabbedPane.setVisible(false);
 		tabbedPane.addChangeListener(this);
 
@@ -2279,6 +2321,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		
 		imageChannels = new JPanel();
 		imageChannels.add(new JLabel("Select image channel:") );
+		imageChannels.add(new JLabel("Select Mode:"));
 		imageChannels.setVisible(false);
 		leftPanel.add(imageChannels, BorderLayout.CENTER);
 		leftPanel.add(tabbedPane, BorderLayout.SOUTH);
