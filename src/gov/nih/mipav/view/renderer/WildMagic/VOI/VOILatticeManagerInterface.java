@@ -23,6 +23,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
@@ -32,6 +34,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+
+import org.janelia.mipav.plugins.worm.untwisting.AccurateModeListener;
 
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
@@ -1122,6 +1126,8 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	
 	
 	private boolean accurateMode = true;
+    // TODO: might want to change the array into set
+    private List<AccurateModeListener> listeners = new ArrayList<>();
 	
     public boolean isAccurateMode() {
         return accurateMode;
@@ -1129,10 +1135,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
     public void toggleAccurateMode() {
         accurateMode = !accurateMode;
-        System.out.println("Toggle Accurate Mode: " + accurateMode);
+        for (AccurateModeListener listener : listeners) {
+        	listener.accurateModeChanged(accurateMode);
+        	
+        }
     }
-
-	
+ 
+    public void addAccurateModeListener(AccurateModeListener listener) {
+        listeners.add(listener);
+    }
 
 	public void keyReleased(KeyEvent e) {
 		isShiftSelected = e.isShiftDown();
@@ -1142,7 +1153,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		
 		if (e.getKeyCode() == KeyEvent.VK_M) {
 			toggleAccurateMode();
-			System.out.println("Mode changed. Accurate mode is now " + (isAccurateMode() ? "enabled" : "disabled"));
 		}
 
 		if (editingCrossSections) {
