@@ -1133,18 +1133,23 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
         return accurateMode;
     }
 
-    public void toggleAccurateMode() {
-        accurateMode = !accurateMode;
-        for (AccurateModeListener listener : listeners) {
-        	listener.accurateModeChanged(accurateMode);
-        	
-        }
-    }
+	public void toggleAccurateMode() {
+		accurateMode = !accurateMode;
+		setAccurateMode(accurateMode);
+	}
+    
+	public void setAccurateMode(boolean accurateMode) {
+		this.accurateMode = accurateMode;
+		for (AccurateModeListener listener : listeners) {
+			listener.accurateModeChanged(accurateMode);
+		}
+	}
  
     public void addAccurateModeListener(AccurateModeListener listener) {
         listeners.add(listener);
     }
 
+    
 	public void keyReleased(KeyEvent e) {
 		isShiftSelected = e.isShiftDown();
 		movingPickedPoint = false;

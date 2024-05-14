@@ -1007,6 +1007,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		updateHistoLUTPanels(activeImage);
 		updateClipPanel(activeImage, activeRenderer, true);
 		updateSurfacePanels();
+		updateSelectionPanel();
+		
 
 		if (activeImage.currentTab != -1) {
 			tabbedPane.setSelectedIndex(activeImage.currentTab);
@@ -1074,6 +1076,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			updateSurfacePanels();
 			updateClipPanel(activeImage, activeRenderer, true);
 			updateHistoLUTPanels(activeImage);
+			updateSelectionPanel();
 
 			if (editMode == EditLattice) {
 				leftImage.voiManager.editLattice();
@@ -1326,9 +1329,9 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 	}
 	
 	
-	 @Override
+	@Override
 	public void accurateModeChanged(boolean isAccurateMode) {
-		 accurateModeButton.setSelected(isAccurateMode);
+		accurateModeButton.setSelected(isAccurateMode);
 		accurateModeButton.setText(isAccurateMode ? "Accurate Mode is now On" : "Accurate Mode is now Off");
 	}
 
@@ -3332,6 +3335,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		// surfaceGUI = new JPanelSurface_WM(volumeRenderer);
 		// tabbedPane.addTab("Surface", null, lightsPanel);
 		// }
+	}
+	
+	private void updateSelectionPanel() {	
+	//	accurateModeChanged(activeImage.voiManager.isAccurateMode());
+		
+		VOILatticeManagerInterface voiManager = activeImage.voiManager;
+		voiManager.setAccurateMode(voiManager.isAccurateMode());
 	}
 
 	/*
