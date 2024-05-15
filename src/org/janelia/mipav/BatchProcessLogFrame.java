@@ -1,4 +1,4 @@
-package org.janelia.mipav.test;
+package org.janelia.mipav;
 
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
