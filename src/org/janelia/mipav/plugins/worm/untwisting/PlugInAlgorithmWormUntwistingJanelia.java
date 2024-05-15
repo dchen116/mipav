@@ -65,7 +65,7 @@ import java.util.Vector;
 
 import javax.swing.JProgressBar;
 
-import org.janelia.mipav.test.BatchProcessLogFrame;
+import org.janelia.mipav.BatchProcessLogFrame;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
