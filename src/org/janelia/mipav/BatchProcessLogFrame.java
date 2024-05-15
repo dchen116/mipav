@@ -1,4 +1,4 @@
-package org.janelia.mipav.test;
+package org.janelia.mipav;
 
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -131,7 +131,6 @@ public class BatchProcessLogFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		System.out.println("Action performed");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		String data = textArea.getText().trim(); // read contents of text area into 'data'
@@ -185,12 +184,4 @@ public class BatchProcessLogFrame implements ActionListener {
 		directory = new File(opDirectory);
 		fileChooser.setCurrentDirectory(directory);
 	}
-/*
-	public static void main(String[] arg) {
-		BatchProcessLogFrame fda = new BatchProcessLogFrame();
-		fda.appendMessage("duplicate annotations");
-		//fda.appendMessage("");
-		// fda.setCurrentDirectory("C:\\Users\\chend\\Desktop");
-	}
-*/
 }
