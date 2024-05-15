@@ -1114,7 +1114,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 	 * lattice, or annotations. The next step in the straightening process is
 	 * automatically enabled and selected.
 	 * 
-	 * @param mode
+	 * @param mode TODO
 	 */
 	public void enableNext(int mode) {
 		closeAll();
