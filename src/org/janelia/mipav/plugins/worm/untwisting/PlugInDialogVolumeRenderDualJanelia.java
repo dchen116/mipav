@@ -124,10 +124,13 @@ import org.janelia.mipav.test.Plot;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.RectangleAnchor;
+import org.jfree.ui.TextAnchor;
 import org.jocl.Sizeof;
 
 import WildMagic.LibFoundation.Mathematics.Mathf;
@@ -2196,31 +2199,47 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 
 	// create a chart image from the values obtained via annotations
 	public static BufferedImage createChartImage(List<Float> values, String title) throws IOException {
-		XYSeries series = new XYSeries("Data");
-		for (int i = 0; i < values.size() - 1; i++) {
-			series.add(i, values.get(i));
-		}
-		XYSeriesCollection dataset = new XYSeriesCollection();
-		dataset.addSeries(series);
+        XYSeries series = new XYSeries("Data");
+        float maxValue = -Float.MAX_VALUE;
+        int maxIndex = -1;
 
-		// create a line chart
-		JFreeChart chart = ChartFactory.createXYLineChart(title, "Sample Index", "Value", dataset,
-				PlotOrientation.VERTICAL, true, true, false);
+        for (int i = 0; i < values.size(); i++) {
+            float value = values.get(i);
+            series.add(i, value);
+            if (value > maxValue) {
+                maxValue = value;
+                maxIndex = i;
+            }
+        }
 
-		XYPlot plot = chart.getXYPlot();
-		XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-		renderer.setSeriesPaint(0, Color.BLUE);
-		renderer.setSeriesStroke(0, new BasicStroke(2.0f));
-		plot.setRenderer(renderer);
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(series);
 
-		// create a buffered image to draw the chart
-		BufferedImage chartImage = new BufferedImage(400, 600, BufferedImage.TYPE_INT_RGB);
-		Graphics2D g2 = chartImage.createGraphics();
-		chart.draw(g2, new java.awt.Rectangle(0, 0, 400, 600));
-		g2.dispose();
+        JFreeChart chart = ChartFactory.createXYLineChart(
+            title, "Index", "Value", dataset,
+            PlotOrientation.VERTICAL, true, true, false);
 
-		return chartImage;
-	}
+        XYPlot plot = chart.getXYPlot();
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        renderer.setSeriesPaint(0, Color.BLUE);
+        renderer.setSeriesStroke(0, new BasicStroke(2.0f));
+        plot.setRenderer(renderer);
+
+        // Add a marker to show the maximum value
+        ValueMarker marker = new ValueMarker(maxIndex);
+        marker.setPaint(Color.RED);
+        marker.setLabel("Max Value: " + maxValue);
+        marker.setLabelAnchor(RectangleAnchor.CENTER);
+        marker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
+        plot.addDomainMarker(marker);
+
+        BufferedImage chartImage = new BufferedImage(400, 600, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = chartImage.createGraphics();
+        chart.draw(g2, new java.awt.Rectangle(0, 0, 400, 600));
+        g2.dispose();
+
+        return chartImage;
+    }
 
 	// update the plot panel in responding to the clicking
 	public void updatePlotPanel(List<Float> values, String title) {
