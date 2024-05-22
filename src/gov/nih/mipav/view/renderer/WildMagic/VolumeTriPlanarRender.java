@@ -53,7 +53,11 @@ import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import com.jogamp.opengl.GLAutoDrawable;
@@ -61,6 +65,9 @@ import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.KeyStroke;
 
+import org.janelia.mipav.plugins.worm.untwisting.AccurateModeListener;
+import org.janelia.mipav.plugins.worm.untwisting.PlotListener;
+import org.janelia.mipav.plugins.worm.untwisting.PlugInDialogVolumeRenderDualJanelia;
 import org.janelia.mipav.test.ValueOutput;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -846,8 +853,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		m_bMouseDrag = false;
 	}
 	
+
+	
 	private void PickVolume3D(Vector3f kPos, Vector3f kDir, Vector3f maxPtAccurate) 
 	{
+		List<Float> plotAccurateValues = new ArrayList<>();
+		List<Float> plotValues = new ArrayList<>();
+		
 		m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
 				Float.MAX_VALUE);
 
@@ -956,6 +968,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							maxValueAccurate = valueAccurate;
 							maxPtAccurate.copy(p0);
 						}
+						plotAccurateValues.add(valueAccurate);
 						// Write data to CSV
 						outputAccurate.writeData(p0.X, p0.Y, p0.Z, valueAccurate);
 					
@@ -990,9 +1003,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							maxValue = value;
 							maxPt.copy(p0);
 						}
+						plotValues.add(value);
 						output.writeData(p0.X, p0.Y, p0.Z, value);
 					}
 				}
+
 
 				output.writeData(maxPt.X, maxPt.Y, maxPt.Z, maxValue);
 				outputAccurate.writeData(maxPtAccurate.X, maxPtAccurate.Y, maxPtAccurate.Z, maxValueAccurate);
@@ -1056,16 +1071,38 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					m_kVOIInterface.updateDisplay();
 				}
 			}
-		}	
-}
+		}
+		if (m_kVOIInterface.isAccurateMode()) {
+			setPlot(plotAccurateValues, "Accurate Values");
+		} else {
+			setPlot(plotValues, "3-Color Values");
+		}
+	}
+
+	// Create a Set to hold PlotListener instances
+	private Set<PlotListener> listeners = new HashSet<>();
+
+	// update all listeners with new plot values and title.
+	public void setPlot(List<Float> values, String title) {
+		for (PlotListener listener : listeners) {
+			listener.updatePlotPanel(values, title);
+		}
+	}
+
+	//  add a new PlotListener
+	public void addPlotListener(PlotListener listener) {
+		listeners.add(listener);
+	}
 	
-	private boolean PickSlice3D(Vector3f kPos, Vector3f kDir, Vector3f maxPt) 
-	{
+	// remove an existing PlotListener
+	public void removePlotListener(PlotListener listener) {
+		listeners.remove(listener);
+	}
+
+	private boolean PickSlice3D(Vector3f kPos, Vector3f kDir, Vector3f maxPt) {
 		// pick on the slices
-		m_kPicker.Execute(m_kSlices.GetScene(),kPos,kDir,0.0f,
-				Float.MAX_VALUE);
-		if (m_kPicker.Records.size() > 0)
-		{ 
+		m_kPicker.Execute(m_kSlices.GetScene(), kPos, kDir, 0.0f, Float.MAX_VALUE);
+		if (m_kPicker.Records.size() > 0) {
 			PickRecord kPickPoint = m_kPicker.GetClosestNonnegative();
 			TriMesh kMesh = (TriMesh)kPickPoint.Intersected;
 			int iPlane = m_kSlices.whichPlane(kMesh);

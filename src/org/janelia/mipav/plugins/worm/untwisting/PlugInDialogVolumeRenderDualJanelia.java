@@ -1,6 +1,5 @@
 package org.janelia.mipav.plugins.worm.untwisting;
 
-
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -68,11 +67,13 @@ import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
 
 import static org.jocl.CL.CL_DEVICE_TYPE_GPU;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -82,6 +83,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -112,9 +114,20 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.ImageIcon;
 
+import org.janelia.mipav.test.Plot;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.jocl.Sizeof;
 
 import WildMagic.LibFoundation.Mathematics.Mathf;
@@ -129,14 +142,15 @@ import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 /**
-* Implements the user-interface for the semi-automatic straightening of the
-* worm. Provides batch-process algorithms for segmenting the seam cells and
-* building lattices. Provides the framework for enabling the user to step
-* through the selected image volumes and view/edit results from the automatic
-* processes. Provides framework for animating the annotations after untwisting.
-*/
-public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements ActionListener, RendererListener,
-		PropertyChangeListener, ViewImageUpdateInterface, WindowListener, ChangeListener, AccurateModeListener {
+ * Implements the user-interface for the semi-automatic straightening of the
+ * worm. Provides batch-process algorithms for segmenting the seam cells and
+ * building lattices. Provides the framework for enabling the user to step
+ * through the selected image volumes and view/edit results from the automatic
+ * processes. Provides framework for animating the annotations after untwisting.
+ */
+public class PlugInDialogVolumeRenderDualJanelia extends JFrame
+		implements ActionListener, RendererListener, PropertyChangeListener, ViewImageUpdateInterface, WindowListener,
+		ChangeListener, AccurateModeListener, PlotListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
@@ -217,7 +231,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 	private JTabbedPane opacityTab;
 	private JPanel clipPanel;
 	private JPanel accuratePanel;
-	//private JButton accurateModeButton;
+	// private JButton accurateModeButton;
 	private JToggleButton accurateModeButton;
 
 	private PlugInDialogVolumeRenderDualJanelia parent;
@@ -311,15 +325,15 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 	public void actionPerformed(ActionEvent event) {
 		String command = event.getActionCommand();
 		Object source = event.getSource();
-		
-		if ( command.equals("BrowseConclude") ) {
+
+		if (command.equals("BrowseConclude")) {
 			UntwistDialog inputs = new UntwistDialog(baseFileLocText.getText());
-			if ( inputs.latticeOutputDir != null ) {
+			if (inputs.latticeOutputDir != null) {
 				latticeFileDir = new String(inputs.latticeOutputDir.getText());
 				setDefaultInputList(latticeFileDir);
 			}
 		}
-		
+
 		if (currentSize == null) {
 			currentSize = new Dimension(getSize());
 			System.err.println(currentSize);
@@ -334,8 +348,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 						this.setVisible(false);
 						annotationAnimationFromSpreadSheet();
 						return;
-					} 
-					else {					
+					} else {
 //						this.setVisible(false);
 //						testForceGraph();
 						MipavUtil.displayError("Please specify a range of images.");
@@ -346,8 +359,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				if (batchFlipLattice.isSelected()) {
 					try {
 						// Batch Automatic Lattice-Building
-						PlugInAlgorithmWormUntwistingJanelia.batchFlipLattices(batchProgress, includeRange, latticeFileDir,
-								baseFileNameText.getText());
+						PlugInAlgorithmWormUntwistingJanelia.batchFlipLattices(batchProgress, includeRange,
+								latticeFileDir, baseFileNameText.getText());
 					} catch (java.lang.OutOfMemoryError e) {
 						MipavUtil
 								.displayError("Error: Not enough memory. Unable to finish automatic lattice-building.");
@@ -382,8 +395,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					try {
 						if (resliceImageCheck.isSelected()) {
 							PlugInAlgorithmWormUntwistingJanelia.reslice(batchProgress, includeRange, baseFileDir,
-									baseFileNameText.getText(), resliceXValue, resliceYValue,
-									resliceZValue);
+									baseFileNameText.getText(), resliceXValue, resliceYValue, resliceZValue);
 						}
 					} catch (java.lang.OutOfMemoryError e) {
 						MipavUtil.displayError("Error: Not enough memory. Unable to finish reslice calculation.");
@@ -412,7 +424,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 						validate();
 						leftRenderer.setVisible(true);
-						if ( rightRenderer != null ) rightRenderer.setVisible(true);
+						if (rightRenderer != null)
+							rightRenderer.setVisible(true);
 					} else {
 						editMode = EditNONE;
 						startButton.setEnabled(true);
@@ -426,12 +439,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 						editCrossSections.setVisible(true);
 						predict.setVisible(true);
 						previewUntwisting.setVisible(true);
-						displayControls.setVisible(false);		
+						displayControls.setVisible(false);
 						imageChannels.setVisible(true);
 
 						validate();
 						leftRenderer.setVisible(true);
-						if ( rightRenderer != null ) rightRenderer.setVisible(true);
+						if (rightRenderer != null)
+							rightRenderer.setVisible(true);
 					} else {
 						editMode = EditNONE;
 						startButton.setEnabled(true);
@@ -449,7 +463,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 						validate();
 						leftRenderer.setVisible(true);
-						if ( rightRenderer != null ) rightRenderer.setVisible(true);
+						if (rightRenderer != null)
+							rightRenderer.setVisible(true);
 					} else {
 						editMode = EditNONE;
 						startButton.setEnabled(true);
@@ -552,12 +567,12 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			// Closes the editing:
 			else if (command.equals("done")) {
 				if (!displayControls.isVisible()) {
-					displayControls.setVisible(true);				
+					displayControls.setVisible(true);
 					imageChannels.setVisible(false);
 
 					validate();
 				}
-				//mkitti 2023_03_01: this is where we save when "done"
+				// mkitti 2023_03_01: this is where we save when "done"
 				saveAll();
 				if (parent != null) {
 					parent.enableNext(editMode);
@@ -566,10 +581,9 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				} else {
 					enableNext(editMode);
 				}
-			}
-			else if (command.equals("demo")) {
+			} else if (command.equals("demo")) {
 				updateSurfacePanels();
-				activeRenderer.addAnimationLattice( activeImage.voiManager.getLattice() );
+				activeRenderer.addAnimationLattice(activeImage.voiManager.getLattice());
 			}
 			// Enables user to generate a new lattice (when none of the automatic ones match
 			// well)
@@ -645,16 +659,15 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 //					activeImage.opacity[i] = activeImage.volOpacityPanel[i].getCompA().getOpacityTransferFunction();
 ////					activeImage.hyperstack[i].UpdateImages(activeImage.opacity[i], 0, null);
 //				}
-				
+
 				if (previewUntwisting.getText().equals("preview")) {
 					previewUntwisting.setText("return");
-					
+
 					previewCount++;
-					
+
 					// save relative contours here upon returning from preview
 					activeImage.voiManager.saveCrossSections();
 
-					
 					// save image orientation:
 					activeImage.volumeMatrix = new Matrix3f(activeRenderer.GetSceneRotation());
 
@@ -665,36 +678,31 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 						activeImage.annotationsTwisted = null;
 					}
 					activeImage.latticeTwisted = new VOIVector(activeImage.voiManager.getLattice());
-					
-					
 
 					if (activeImage.previewHS != null) {
-						for ( int i = 0; i < activeImage.previewHS.length; i++ ) {
+						for (int i = 0; i < activeImage.previewHS.length; i++) {
 							activeImage.previewHS[i].GetImage().disposeLocal(false);
 						}
 					}
 					activeImage.previewHS = untwistingTest();
-					for ( int i = 0; i < activeImage.previewHS.length; i++ ) {
-						activeImage.previewHS[i].UpdateImages( activeImage.hyperstack[i].GetLUT());
+					for (int i = 0; i < activeImage.previewHS.length; i++) {
+						activeImage.previewHS[i].UpdateImages(activeImage.hyperstack[i].GetLUT());
 					}
 					activeImage.voiManager.removeListeners();
 					activeImage.voiManager.setImage(activeImage.previewHS[0].GetImage(), null);
 					activeImage.volumeImage = activeImage.previewHS[0];
 					activeRenderer.setHyperStack(activeImage.previewHS, activeImage.colormap);
-				} 
-				else {
+				} else {
 					// "return"
 					previewCount--;
 					previewUntwisting.setText("preview");
-					
+
 					// save relative contours here upon returning from preview
 					activeImage.voiManager.saveCrossSections();
 
 					activeImage.voiManager.removeListeners();
 					activeImage.voiManager.setImage(activeImage.hyperstack[0].GetImage(), null);
 					activeImage.volumeImage = activeImage.hyperstack[0];
-
-					
 
 					// restore twisted annotations and lattice:
 					activeImage.wormImage.unregisterAllVOIs();
@@ -745,18 +753,15 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 							}
 						}
 					}
-					
-					
-					
+
 					if (activeImage.previewHS != null) {
-						for ( int i = 0; i < activeImage.previewHS.length; i++ ) {
+						for (int i = 0; i < activeImage.previewHS.length; i++) {
 							activeImage.previewHS[i].GetImage().disposeLocal(false);
 						}
 						activeImage.previewHS = null;
 					}
 					activeRenderer.setHyperStack(activeImage.hyperstack, activeImage.colormap);
-					
-					
+
 //					activeImage.voiManager.setImage(activeImage.wormImage, null);
 //					activeImage.volumeImage.UpdateData(activeImage.wormImage, activeImage.volumeImage.GetLUT(), true);
 //					activeRenderer.resetAxis();
@@ -823,44 +828,44 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			if (activeImage.voiManager != null) {
 				activeImage.voiManager.setPaddingFactor(paddingFactor);
 			}
-		} 
-		
-		if ( source instanceof JCheckBox ) {
-			boolean selected = ((JCheckBox)source).isSelected();
-			int which =  imageChannel(command);
+		}
+
+		if (source instanceof JCheckBox) {
+			boolean selected = ((JCheckBox) source).isSelected();
+			int which = imageChannel(command);
 //			System.err.println(which + "  " + selected );
-			if ( which != -1 ) {
-				activeRenderer.setImageOn(which, selected);	
+			if (which != -1) {
+				activeRenderer.setImageOn(which, selected);
 			}
-			if(opacityTab != null && opacityTab.getTabCount() > 0) {
+			if (opacityTab != null && opacityTab.getTabCount() > 0) {
 				which = opacityTab.getSelectedIndex();
-				for(int i = 0; i < opacityTab.getTabCount(); ++i) {
-					if( opacityTab.getTitleAt(i).startsWith(command) ) {
+				for (int i = 0; i < opacityTab.getTabCount(); ++i) {
+					if (opacityTab.getTitleAt(i).startsWith(command)) {
 						opacityTab.setEnabledAt(i, selected);
-						if( !selected && i == which) {
+						if (!selected && i == which) {
 							opacityTab.setSelectedIndex((which + 1) % opacityTab.getTabCount());
 						}
-						if( selected ) {
+						if (selected) {
 							opacityTab.setSelectedIndex(i);
 						}
 					}
 				}
 			}
-			if(lutTab != null && lutTab.getTabCount() > 0) {
+			if (lutTab != null && lutTab.getTabCount() > 0) {
 				which = lutTab.getSelectedIndex();
-				for(int i = 0; i < lutTab.getTabCount(); ++i) {
-					if( lutTab.getTitleAt(i).startsWith(command) ) {
+				for (int i = 0; i < lutTab.getTabCount(); ++i) {
+					if (lutTab.getTitleAt(i).startsWith(command)) {
 						lutTab.setEnabledAt(i, selected);
-						if( !selected && i == which) {
+						if (!selected && i == which) {
 							lutTab.setSelectedIndex((which + 1) % lutTab.getTabCount());
 						}
-						if ( selected ) {
+						if (selected) {
 							lutTab.setSelectedIndex(i);
 						}
 					}
 				}
 			}
-			
+
 		}
 	}
 
@@ -882,7 +887,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		}
 	}
 
-	
 	private String resultsDir(String sharedDir, ModelImage image) {
 		String imageName = image.getImageFileName();
 		if (imageName.contains("_clone")) {
@@ -891,13 +895,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		if (imageName.contains("_straight")) {
 			imageName = imageName.replaceAll("_straight", "");
 		}
-		String outputDir = sharedDir + File.separator + JDialogBase.makeImageName(imageName, "") + 
-				File.separator + JDialogBase.makeImageName(imageName, "_results") + File.separator;
+		String outputDir = sharedDir + File.separator + JDialogBase.makeImageName(imageName, "") + File.separator
+				+ JDialogBase.makeImageName(imageName, "_results") + File.separator;
 		return outputDir;
 	}
-	
+
 	public void rendererConfigured(VolumeTriPlanarRenderBase renderer) {
-		
+
 		if ((annotationList != null) && (annotationNames != null) && (triVolume != null)) {
 			triVolume.addVOIS(annotationList, annotationNames);
 			triVolume.displayAnnotationSpheres();
@@ -918,6 +922,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName()));
 			rightDisplayPanel.setBorder(JDialogBase.buildTitledBorder(rightImage.wormImage.getImageName(), Color.red));
 		}
+		activeRenderer.addPlotListener(this);
 
 		if (activeImage.voiManager == null) {
 			activeImage.voiManager = new VOILatticeManagerInterface(null, activeRenderer.getVolumeImage().GetImage(),
@@ -925,29 +930,26 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		}
 		activeRenderer.setVOILatticeManager(activeImage.voiManager);
 
-		if ( activeImage.previewHS != null ) {
+		if (activeImage.previewHS != null) {
 			activeImage.voiManager.setPreviewMode(true, activeImage.voiManager.getLatticeStraight(),
 					activeImage.voiManager.getAnnotationsStraight());
 			activeRenderer.resetAxisXInv();
-		}
-		else if ( activeImage.latticeTwisted != null ) {
-			activeImage.voiManager.setPreviewMode(false, activeImage.latticeTwisted,
-					activeImage.annotationsTwisted);
+		} else if (activeImage.latticeTwisted != null) {
+			activeImage.voiManager.setPreviewMode(false, activeImage.latticeTwisted, activeImage.annotationsTwisted);
 
 			activeRenderer.SetSceneRotation(activeImage.volumeMatrix);
-		}
-		else {
-			if (editMode == ReviewResults) {			
-				activeImage.voiManager.setLattice(WormData.readStraightLattice( resultsDir(latticeFileDir, activeImage.wormImage)));
-			} 
-			else {
+		} else {
+			if (editMode == ReviewResults) {
+				activeImage.voiManager
+						.setLattice(WormData.readStraightLattice(resultsDir(latticeFileDir, activeImage.wormImage)));
+			} else {
 				if (loadLegacyLatticeCheck.isSelected()) {
 					activeImage.wormImage.setResolutions(originalResolutions);
 				}
 				final String dir = resultsDir(latticeFileDir, activeImage.wormImage);
-				activeImage.voiManager
-				.setLattice(WormData.readFinalLattice(dir, 
-						loadLegacyLatticeCheck.isSelected(), activeImage.wormImage), dir);
+				activeImage.voiManager.setLattice(
+						WormData.readFinalLattice(dir, loadLegacyLatticeCheck.isSelected(), activeImage.wormImage),
+						dir);
 
 				if (loadLegacyLatticeCheck.isSelected()) {
 					activeImage.wormImage.setResolutions(new float[] { 1f, 1f, 1 });
@@ -961,17 +963,19 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				activeImage.annotations = null;
 			}
 			VOI annotations = activeImage.voiManager.getAnnotations();
-			//		System.err.println( activeImage.wormImage.getImageName() + "  " + annotations);
+			// System.err.println( activeImage.wormImage.getImageName() + " " +
+			// annotations);
 
 			if (annotations != null) {
 				for (int i = 0; i < annotations.getCurves().size(); i++) {
 					final VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-					//				System.err.println( "       " + i + "  " + text.getText() + "  " + text.elementAt(0));
+					// System.err.println( " " + i + " " + text.getText() + " " +
+					// text.elementAt(0));
 					text.createVolumeVOI(activeImage.volumeImage, activeRenderer.getTranslate());
 				}
 			}
 		}
-		
+
 		activeRenderer.displayVOIs(true);
 		activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
 		activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
@@ -983,7 +987,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 			activeImage.annotationPanelUI.setPreviewMode(activeImage.previewHS != null);
 			activeImage.latticeTable.setPreviewMode(activeImage.previewHS != null);
-			
+
 			activeImage.voiManager.editAnnotations(false);
 			// initDisplaySeamPanel();
 		} else if (editMode == EditLattice) {
@@ -1002,18 +1006,16 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			renderer.resetAxisXInv();
 		}
 
-
 		initImageChannels(activeImage);
 		updateHistoLUTPanels(activeImage);
 		updateClipPanel(activeImage, activeRenderer, true);
 		updateSurfacePanels();
 		updateSelectionPanel();
-		
 
 		if (activeImage.currentTab != -1) {
 			tabbedPane.setSelectedIndex(activeImage.currentTab);
 		}
-		
+
 		int nextStep = dualGPU == null ? 1 : 2;
 		imageIndex = Math.min(includeRange.size() - 1, imageIndex);
 		imageIndex = Math.max(0, imageIndex);
@@ -1027,7 +1029,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			backButton.setEnabled(false);
 			nextButton.setEnabled(false);
 		}
-		
 
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		if (dualGPU != null) {
@@ -1048,7 +1049,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 	public void setActiveRenderer(VolumeTriPlanarRenderBase renderer) {
 //		System.err.println("setActiveRenderer");
 
-		VolumeTriPlanarRenderBase previousActive = activeRenderer;
+		VolumeTriPlanarRender previousActive = activeRenderer;
 		if (leftRenderer == renderer) {
 			activeRenderer = leftRenderer;
 			leftDisplayPanel.setBorder(JDialogBase.buildTitledBorder(leftImage.wormImage.getImageName(), Color.red));
@@ -1062,7 +1063,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			activeImage = rightImage;
 		}
 
-				
+		activeRenderer.addPlotListener(this);
+
 		if (previousActive != activeRenderer) {
 
 			if (activeImage.voiManager.isPreview()) {
@@ -1086,6 +1088,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				tabbedPane.setSelectedIndex(activeImage.currentTab);
 				stateChanged(null);
 			}
+			previousActive.removePlotListener(this);
+
 		}
 		int nextStep = dualGPU == null ? 1 : 2;
 		if (includeRange != null) {
@@ -1204,11 +1208,11 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				if (imageStack[i].voiManager != null) {
 					imageStack[i].voiManager = null;
 				}
-				if ( imageStack[i].hyperstack != null ) {
-					for ( int j = 0; j < imageStack[i].hyperstack.length; j++ ) {
-						if ( imageStack[i].hyperstack[j] != null ) {
+				if (imageStack[i].hyperstack != null) {
+					for (int j = 0; j < imageStack[i].hyperstack.length; j++) {
+						if (imageStack[i].hyperstack[j] != null) {
 							imageStack[i].hyperstack[j].dispose();
-							imageStack[i].hyperstack[j] = null;							
+							imageStack[i].hyperstack[j] = null;
 						}
 					}
 				}
@@ -1237,8 +1241,9 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		if (propertyName.equals("Opacity")) {
 			int which = opacityTab.getSelectedIndex();
 //			System.err.println("propertyChange " + which);
-			if ( which != -1 ) {
-				final TransferFunction kTransfer = activeImage.volOpacityPanel[which].getCompA().getOpacityTransferFunction();
+			if (which != -1) {
+				final TransferFunction kTransfer = activeImage.volOpacityPanel[which].getCompA()
+						.getOpacityTransferFunction();
 				updateImages(activeImage.colormap, activeImage.hyperstack[which].GetImage(), kTransfer, which);
 				activeImage.hyperstack[which].UpdateImages(kTransfer, 0, null);
 //
@@ -1267,8 +1272,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 //		 System.err.println("updateImages" );
 		if (activeImage.hyperstack != null && lutTab != null) {
 			int which = lutTab.getSelectedIndex();
-			if ( which != -1 ) {
-				updateImages(activeImage.colormap, activeImage.hyperstack[which].GetLUT(), which );
+			if (which != -1) {
+				updateImages(activeImage.colormap, activeImage.hyperstack[which].GetLUT(), which);
 //				System.err.println("updateImages " + which);
 				activeImage.hyperstack[which].UpdateImages(activeImage.hyperstack[which].getLUT());
 //				if ( activeImage.previewHS != null ) {
@@ -1281,14 +1286,14 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		}
 		return false;
 	}
-	
-	private void updateImages(Texture texture, ModelLUT lut, int index ) {
+
+	private void updateImages(Texture texture, ModelLUT lut, int index) {
 		byte[] data = texture.GetImage().GetData();
 		ModelLUT.exportIndexedLUTMin(lut, data, index);
 		texture.Reload(true);
 	}
 
-	private void updateImages(Texture texture, ModelImage image, TransferFunction tf, int index ) {
+	private void updateImages(Texture texture, ModelImage image, TransferFunction tf, int index) {
 		final int lutHeight = texture.GetImage().GetBound(0);
 		final byte[] data = texture.GetImage().GetData();
 		int offset = index * lutHeight * 4;
@@ -1304,6 +1309,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		}
 		texture.Reload(true);
 	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -1327,8 +1333,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 //		}
 		return false;
 	}
-	
-	
+
 	@Override
 	public void accurateModeChanged(boolean isAccurateMode) {
 		accurateModeButton.setSelected(isAccurateMode);
@@ -1435,7 +1440,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		// rightImage.wormData.getAnnotationsPath() );
 
 		ProcessBuilder processBuilder = new ProcessBuilder("python", baseFileDir + File.separator + "track_MIPAV.py",
-				WormData.getStraightAnnotationsPath(resultsDir(latticeFileDir, leftImage.wormImage)), 
+				WormData.getStraightAnnotationsPath(resultsDir(latticeFileDir, leftImage.wormImage)),
 				WormData.getStraightAnnotationsPath(resultsDir(latticeFileDir, rightImage.wormImage)),
 				WormData.getIntegratedMarkerAnnotationsPath(resultsDir(latticeFileDir, leftImage.wormImage)),
 				WormData.getIntegratedMarkerAnnotationsPath(resultsDir(latticeFileDir, rightImage.wormImage)));
@@ -1463,10 +1468,10 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		// leftImage.wormData.getAnnotationsPath() + " " +
 		// rightImage.wormData.getAnnotationsPath() );
 
-		String predictedTwisted = resultsDir(latticeFileDir, data.wormImage) + File.separator + "prediction" + File.separator
-				+ "predicted_annotations.csv";
-		String predictedStraight = resultsDir(latticeFileDir, data.wormImage) + File.separator + "prediction" + File.separator
-				+ "predicted_straightened_annotations.csv";
+		String predictedTwisted = resultsDir(latticeFileDir, data.wormImage) + File.separator + "prediction"
+				+ File.separator + "predicted_annotations.csv";
+		String predictedStraight = resultsDir(latticeFileDir, data.wormImage) + File.separator + "prediction"
+				+ File.separator + "predicted_straightened_annotations.csv";
 
 		File file = new File(predictedTwisted);
 		if (!file.exists())
@@ -1477,7 +1482,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 		ProcessBuilder processBuilder = new ProcessBuilder("python",
 				baseFileDir[0] + File.separator + "restraighten_MIPAV.py", predictedStraight, predictedTwisted,
-				WormData.getIntegratedMarkerAnnotationsPath( resultsDir(latticeFileDir, rightImage.wormImage)));
+				WormData.getIntegratedMarkerAnnotationsPath(resultsDir(latticeFileDir, rightImage.wormImage)));
 		processBuilder.redirectErrorStream(true);
 
 		Process process = processBuilder.start();
@@ -1495,8 +1500,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 	private void runPython() {
 		// delete the predicted files for the right image:
-		String fileName = resultsDir(latticeFileDir, rightImage.wormImage) + File.separator + "prediction" + File.separator
-				+ "predicted_straightened_annotations.csv";
+		String fileName = resultsDir(latticeFileDir, rightImage.wormImage) + File.separator + "prediction"
+				+ File.separator + "predicted_straightened_annotations.csv";
 		File straightFile = new File(fileName);
 		if (straightFile.exists()) {
 			straightFile.delete();
@@ -1511,7 +1516,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		// when user presses 'predict'
 		// prototype:
 		// 1. straighten the right image - left annotations remain fixed:
-		ModelImage contourImage = rightImage.voiManager.untwistAnnotations(resultsDir(latticeFileDir, rightImage.wormImage), rightImage.contourImage);
+		ModelImage contourImage = rightImage.voiManager
+				.untwistAnnotations(resultsDir(latticeFileDir, rightImage.wormImage), rightImage.contourImage);
 		if (rightImage.contourImage != null && rightImage.contourImage != contourImage) {
 			rightImage.contourImage.disposeLocal(false);
 			rightImage.contourImage = null;
@@ -1563,7 +1569,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		activeImage.voiManager.setPaddingFactor(paddingFactor);
 		ModelImage[] images = activeImage.voiManager.untwistTest(activeImage.hyperstack);
 		VolumeImage[] hyperstack = new VolumeImage[images.length];
-		for ( int i = 0; i < images.length; i++ ) {
+		for (int i = 0; i < images.length; i++) {
 			images[i].unregisterAllVOIs();
 			hyperstack[i] = new VolumeImage(false, images[i], "" + i, null, 0, false);
 		}
@@ -1582,19 +1588,19 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		OpenCLInfo.getMaxMemSize(CL_DEVICE_TYPE_GPU, maxMemSizeArray);
 		long maxAllocSize = maxMemSizeArray[0];
 		long totalMemSize = maxMemSizeArray[1];
-		
+
 		long memoryUsed = 0;
-		for ( int i = 0; i < images.length; i++ ) {
-			if ( images[i] != null ) {
+		for (int i = 0; i < images.length; i++) {
+			if (images[i] != null) {
 				int dataSize = images[i].getDataSize();
-				if ( dataSize > (maxAllocSize / (Sizeof.cl_float)) ) {
+				if (dataSize > (maxAllocSize / (Sizeof.cl_float))) {
 					return false;
 				}
 				memoryUsed += dataSize;
 			}
 		}
 
-		if ( memoryUsed >= (totalMemSize / Sizeof.cl_float) ) {
+		if (memoryUsed >= (totalMemSize / Sizeof.cl_float)) {
 			return false;
 		}
 		return true;
@@ -1643,12 +1649,12 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				long memoryInUse = MipavUtil.getUsedHeapMemory();
 
 				for (int i = 0; i < includeRange.size(); i++) {
-					
+
 					ModelImage[] images = new ModelImage[baseFileDir.length];
 
 					String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
 					File[] imageFiles = new File[baseFileDir.length];
-					for ( int j = 0; j < baseFileDir.length; j++ ) {
+					for (int j = 0; j < baseFileDir.length; j++) {
 						if (editMode == ReviewResults) {
 							fileName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
 							String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
@@ -1656,16 +1662,15 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 									+ File.separator;
 							imageFiles[j] = new File(baseFileDir[j] + File.separator + subDirName + subDirNameResults
 									+ PlugInAlgorithmWormUntwistingJanelia.outputImages + File.separator + fileName);
-						}
-						else {
+						} else {
 							imageFiles[j] = new File(baseFileDir[j] + File.separator + fileName);
 						}
 
 						if (imageFiles[j].exists()) {
 							images[j] = openImage(imageFiles[j], fileName);
-							System.err.println("Opening... " + fileName + "  " + images[j].isColorImage() );
+							System.err.println("Opening... " + fileName + "  " + images[j].isColorImage());
 							images[j].calcMinMax();
-							if ( images[j].isColorImage() ) {
+							if (images[j].isColorImage()) {
 								images[j] = convertToGray(images[j]);
 							}
 						}
@@ -1673,12 +1678,12 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 					// Add memory check here:
 					if (i == 0) {
-						if ( !checkGPUMemory(images) ) {
+						if (!checkGPUMemory(images)) {
 							MipavUtil.displayError("Image size too big to load on GPU.");
 							progressBar.setVisible(false);
 							progressBar.dispose();
 							progressBar = null;
-							for ( int j = 0; j < images.length; j++ ) {
+							for (int j = 0; j < images.length; j++) {
 								if (images[j] != null) {
 									images[j].disposeLocal();
 									images[j] = null;
@@ -1699,7 +1704,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 							progressBar.setVisible(false);
 							progressBar.dispose();
 							progressBar = null;
-							for ( int j = 0; j < images.length; j++ ) {
+							for (int j = 0; j < images.length; j++) {
 								if (images[j] != null) {
 									images[j].disposeLocal();
 									images[j] = null;
@@ -1713,7 +1718,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 					thresholdImage(images);
 					leftImage.wormImage = images[0];
-					
+
 					imageStack[i] = leftImage;
 					System.err.println("... adding " + i + " " + leftImage.wormImage.getImageName());
 
@@ -1724,16 +1729,18 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 						leftImage.annotations = null;
 					}
 					leftImage.hyperstack = new VolumeImage[images.length];
-					for ( int j = 0; j < images.length; j++ ) {
+					for (int j = 0; j < images.length; j++) {
 						leftImage.hyperstack[j] = new VolumeImage(false, images[j], "" + j, null, 0, false);
 					}
-					leftImage.volumeImage = leftImage.hyperstack[0]; //new VolumeImage(false, leftImage.wormImage, "A", null, 0, false);
+					leftImage.volumeImage = leftImage.hyperstack[0]; // new VolumeImage(false, leftImage.wormImage, "A",
+																		// null, 0, false);
 					leftImage.voiManager = new VOILatticeManagerInterface(null, leftImage.volumeImage.GetImage(), null,
 							0, true, null);
 					leftImage.voiManager.addAccurateModeListener(this);
-					
+
 					byte[] aucData = new byte[256 * 4 * images.length];
-					GraphicsImage cmImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, images.length, aucData, new String("colormap" + leftImage.volumeImage.GetImage().getImageFileName()));
+					GraphicsImage cmImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, images.length,
+							aucData, new String("colormap" + leftImage.volumeImage.GetImage().getImageFileName()));
 					leftImage.colormap = new Texture();
 					leftImage.colormap.SetImage(cmImage);
 
@@ -1753,7 +1760,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					return false;
 				success = true;
 
-				leftRenderer = new VolumeTriPlanarRender( leftImage.hyperstack, leftImage.colormap );
+				leftRenderer = new VolumeTriPlanarRender(leftImage.hyperstack, leftImage.colormap);
 				leftRenderer.setVisible(false);
 				leftRenderer.addConfiguredListener(this);
 
@@ -1853,10 +1860,10 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		return success;
 	}
 
-	private void thresholdImage(ModelImage[] images ) {
+	private void thresholdImage(ModelImage[] images) {
 		if (thresholdImageCheck.isSelected()) {
-			for ( int i = 0; i < images.length; i++ ) {
-				if ( images[i] != null ) {
+			for (int i = 0; i < images.length; i++) {
+				if (images[i] != null) {
 
 					for (int j = 0; j < images[i].getDataSize(); j++) {
 						if (images[i].getFloat(j) > threshold) {
@@ -1869,40 +1876,45 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		}
 	}
 
-	private ModelImage convertToGray(ModelImage image ) {
+	private ModelImage convertToGray(ModelImage image) {
 		ModelImage result = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(),
 				JDialogBase.makeImageName(image.getImageFileName(), ""));
-		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1; 
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;		
-		
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+
 		float max = 0;
 		float maxSum = 0;
-		for ( int z = 0; z < dimZ; z++ ) {
-			for ( int y = 0; y < dimY; y++ ) {
-				for ( int x = 0; x < dimX; x++ ) {
+		for (int z = 0; z < dimZ; z++) {
+			for (int y = 0; y < dimY; y++) {
+				for (int x = 0; x < dimX; x++) {
 					float r = image.getFloatC(x, y, z, 1);
 					float g = image.getFloatC(x, y, z, 2);
 					float b = image.getFloatC(x, y, z, 3);
-					if ( r > max ) max = r;
-					if ( g > max ) max = g;
-					if ( b > max ) max = b;
+					if (r > max)
+						max = r;
+					if (g > max)
+						max = g;
+					if (b > max)
+						max = b;
 					float sum = r + b + g;
-					if ( sum > maxSum ) maxSum = sum;
+					if (sum > maxSum)
+						maxSum = sum;
 					result.set(x, y, z, sum);
 				}
 			}
 		}
-		if ( maxSum > max ) {
+		if (maxSum > max) {
 			float scale = maxSum / max;
-			for ( int i = 0; i < result.getDataSize(); i++ ) {
-				result.set(i,  result.getFloat(i) / scale);;
+			for (int i = 0; i < result.getDataSize(); i++) {
+				result.set(i, result.getFloat(i) / scale);
+				;
 			}
 		}
 		result.calcMinMax();
 		return result;
 	}
-	
+
 	private ModelImage combineImages(ModelImage imageA, ModelImage imageB, ModelImage imageC) {
 		// imageA is never null and is always written into the 'green' channel...
 
@@ -1912,7 +1924,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 		// Make algorithm
 		ModelImage blank = null;
-		if ( imageB == null && imageC != null ) {
+		if (imageB == null && imageC != null) {
 			blank = new ModelImage(ModelImage.SHORT, imageA.getExtents(),
 					JDialogBase.makeImageName(imageA.getImageName(), ""));
 
@@ -1920,8 +1932,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					true, true);
 			mathAlgo.run();
 			blank.disposeLocal(false);
-		}
-		else if ( imageB != null && imageC == null ) {
+		} else if (imageB != null && imageC == null) {
 			blank = new ModelImage(ModelImage.SHORT, imageA.getExtents(),
 					JDialogBase.makeImageName(imageA.getImageName(), ""));
 
@@ -1929,8 +1940,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					true, true);
 			mathAlgo.run();
 			blank.disposeLocal(false);
-		}
-		else {
+		} else {
 			AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imageB, imageA, imageC, displayImage, true, false, 255,
 					true, true);
 			mathAlgo.run();
@@ -1966,7 +1976,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		MipavUtil.centerOnScreen(progress);
 
 		String inputDirName = baseFileDir[0] + File.separator;
-		 System.err.println( inputDirName );
+		System.err.println(inputDirName);
 		final File inputFileDir = new File(inputDirName);
 
 		Vector3f min = new Vector3f(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
@@ -2180,7 +2190,52 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		progress.dispose();
 		progress = null;
 	}
-	
+
+	private JLabel plotLabel;
+	private JPanel plotPanel;
+
+	// create a chart image from the values obtained via annotations
+	public static BufferedImage createChartImage(List<Float> values, String title) throws IOException {
+		XYSeries series = new XYSeries("Data");
+		for (int i = 0; i < values.size() - 1; i++) {
+			series.add(i, values.get(i));
+		}
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		dataset.addSeries(series);
+
+		// create a line chart
+		JFreeChart chart = ChartFactory.createXYLineChart(title, "Sample Index", "Value", dataset,
+				PlotOrientation.VERTICAL, true, true, false);
+
+		XYPlot plot = chart.getXYPlot();
+		XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+		renderer.setSeriesPaint(0, Color.BLUE);
+		renderer.setSeriesStroke(0, new BasicStroke(2.0f));
+		plot.setRenderer(renderer);
+
+		// create a buffered image to draw the chart
+		BufferedImage chartImage = new BufferedImage(400, 600, BufferedImage.TYPE_INT_RGB);
+		Graphics2D g2 = chartImage.createGraphics();
+		chart.draw(g2, new java.awt.Rectangle(0, 0, 400, 600));
+		g2.dispose();
+
+		return chartImage;
+	}
+
+	// update the plot panel in responding to the clicking
+	public void updatePlotPanel(List<Float> values, String title) {
+		SwingUtilities.invokeLater(() -> {
+			try {
+				BufferedImage chartImage = createChartImage(values, title);
+				plotLabel.setIcon(new ImageIcon(chartImage));
+				plotPanel.revalidate();
+				plotPanel.repaint();
+			} catch (IOException e) {
+				System.err.println("Error updating plot: " + e.getMessage());
+			}
+		});
+	}
+
 	/**
 	 * User-interface initialization. If the UI is integrated all panels are
 	 * displayed in one window. Otherwise the UI is divided into volume display and
@@ -2272,42 +2327,48 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		dialogGUI.getContentPane().add(panel1, BorderLayout.NORTH);
 		dialogGUI.getContentPane().add(panel2, BorderLayout.SOUTH);
 
-		lutPanel = new JPanel(new GridLayout(2,1));
+		lutPanel = new JPanel(new GridLayout(2, 1));
 		lutTab = new JTabbedPane();
 		lutTab.addChangeListener(this);
 		lutPanel.add(lutTab, BorderLayout.CENTER);
-		opacityPanel = new JPanel( new BorderLayout() );
+		opacityPanel = new JPanel(new BorderLayout());
 		opacityTab = new JTabbedPane();
 		opacityTab.addChangeListener(this);
 		opacityPanel.add(opacityTab, BorderLayout.CENTER);
-		clipPanel = new JPanel( new BorderLayout() );
-		
-		//added a panel with button to be able to turn off accurate mode and switch to 3-color mode(not working currently)
+		clipPanel = new JPanel(new BorderLayout());
+
+		// added a panel with button to be able to turn off accurate mode and switch to
+		// 3-color mode(not working currently)
 		accuratePanel = new JPanel(new BorderLayout());
-		JPanel buttonPanel = new JPanel(); 
-		//accurateModeButton = new JButton("Accurate Mode");
+		JPanel buttonPanel = new JPanel();
+		// accurateModeButton = new JButton("Accurate Mode");
 		accurateModeButton = new JToggleButton("Accurate Mode");
 		accurateModeChanged(true);
 		accurateModeButton.setPreferredSize(new Dimension(200, 50));
 
-		
-		// Add an action response to the button 
+		// Add an action response to the button
 		accurateModeButton.addActionListener(new ActionListener() {
-		    @Override
-		    public void actionPerformed(ActionEvent e) {
-		       // activeImage.voiManager.toggleAccurateMode();
-		        
-		        JToggleButton toggleButton = (JToggleButton) e.getSource();
-                boolean isSelected = toggleButton.isSelected();
-               activeImage.voiManager.toggleAccurateMode();
-		    }
-		}); 
-		
-		// Add the accurateModeButton to the buttonPanel, then add the buttonPanel to the accuratePanel
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// activeImage.voiManager.toggleAccurateMode();
+
+				JToggleButton toggleButton = (JToggleButton) e.getSource();
+				boolean isSelected = toggleButton.isSelected();
+				activeImage.voiManager.toggleAccurateMode();
+			}
+		});
+
+		// Add the accurateModeButton to the buttonPanel, then add the buttonPanel to
+		// the accuratePanel
 		buttonPanel.add(accurateModeButton);
 		accuratePanel.add(buttonPanel, BorderLayout.CENTER);
 
-		
+		plotPanel = new JPanel(new BorderLayout());
+		plotPanel.setBorder(new TitledBorder("Plot"));
+		plotLabel = new JLabel();
+		plotPanel.add(plotLabel, BorderLayout.CENTER);
+		accuratePanel.add(plotPanel, BorderLayout.SOUTH);
+
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
@@ -2320,9 +2381,9 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		displayControls.add(dialogGUI.getContentPane(), BorderLayout.NORTH);
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.add(displayControls, BorderLayout.NORTH);
-		
+
 		imageChannels = new JPanel();
-		imageChannels.add(new JLabel("Select image channel:") );
+		imageChannels.add(new JLabel("Select image channel:"));
 		imageChannels.add(new JLabel("Select Mode:"));
 		imageChannels.setVisible(false);
 		leftPanel.add(imageChannels, BorderLayout.CENTER);
@@ -2388,7 +2449,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		doneButton.setVisible(true);
 		doneButton.setEnabled(true);
 		backNextPanel.add(doneButton);
-		
+
 		JButton demo = gui.buildButton("demo");
 		demo.addActionListener(this);
 		demo.setActionCommand("demo");
@@ -2397,7 +2458,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 //		backNextPanel.add(demo);
 
 		latticeSelectionPanel = new JPanel();
-		
+
 		newLatticeButton = gui.buildButton("new lattice");
 		newLatticeButton.addActionListener(this);
 		newLatticeButton.setActionCommand("newLattice");
@@ -2418,13 +2479,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		displayModel.setVisible(false);
 		displayModel.setEnabled(true);
 		latticeSelectionPanel.add(displayModel);
-		
+
 		displaySurface = gui.buildCheckBox("Show Surface", false);
 		displaySurface.addActionListener(this);
 		displaySurface.setActionCommand("displaySurface");
 		displaySurface.setVisible(false);
 		displaySurface.setEnabled(true);
-		
+
 		editCrossSections = gui.buildCheckBox("Edit Sections", false);
 		editCrossSections.addActionListener(this);
 		editCrossSections.setActionCommand("editCrossSections");
@@ -2894,10 +2955,11 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 	private void loadPredicted(IntegratedWormData data) {
 		// load and save the straightened predicted values:
-		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(resultsDir(latticeFileDir, data.wormImage) + File.separator
-				+ "prediction" + File.separator + "predicted_straightened_annotations.csv");
+		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(resultsDir(latticeFileDir, data.wormImage)
+				+ File.separator + "prediction" + File.separator + "predicted_straightened_annotations.csv");
 		if (markerAnnotations != null) {
-			LatticeModel.saveAnnotationsAsCSV( resultsDir(latticeFileDir, data.wormImage) + File.separator + "straightened_annotations",
+			LatticeModel.saveAnnotationsAsCSV(
+					resultsDir(latticeFileDir, data.wormImage) + File.separator + "straightened_annotations",
 					"straightened_annotations.csv", markerAnnotations);
 		}
 		// load, save and display the predicted annotations:
@@ -2913,7 +2975,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			System.err.println(markerAnnotations + "  " + markerAnnotations.getCurves().size());
 			data.annotations.add(markerAnnotations);
 			data.voiManager.addAnnotations(data.annotations);
-			WormData.saveIntegratedMarkerAnnotations(resultsDir(latticeFileDir, data.wormImage), data.voiManager.getAnnotations());
+			WormData.saveIntegratedMarkerAnnotations(resultsDir(latticeFileDir, data.wormImage),
+					data.voiManager.getAnnotations());
 			data.annotations = null;
 
 			VOI annotations = data.voiManager.getAnnotations();
@@ -2941,8 +3004,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				if (markers != null) {
 					data.annotations.add(markers);
 				}
-			} 
-			else {
+			} else {
 //				if (loadLegacyAnnotationsCheck.isSelected()) {
 //					data.wormImage.setResolutions(originalResolutions);
 //				}
@@ -2970,7 +3032,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			System.err.println("openAnnotations " + data.wormImage.getImageName() + "   "
 					+ data.annotations.elementAt(0).getCurves().size());
 	}
-	
+
 	/**
 	 * Saves the seam cells to the default edited file for the current image.
 	 */
@@ -2981,8 +3043,9 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		if (imageIndex >= includeRange.size()) {
 			return;
 		}
-		WormData.saveSeamAnnotations(resultsDir(latticeFileDir, activeImage.wormImage), activeImage.voiManager.getAnnotations(),
-				(editMode != CheckSeam) && (editMode != IntegratedEditing), true);
+		WormData.saveSeamAnnotations(resultsDir(latticeFileDir, activeImage.wormImage),
+				activeImage.voiManager.getAnnotations(), (editMode != CheckSeam) && (editMode != IntegratedEditing),
+				true);
 	}
 
 	/**
@@ -3031,7 +3094,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		}
 
 		baseFileName = baseFileNameText.getText();
-		
+
 		includeRange = new Vector<Integer>();
 		String rangeFusion = rangeFusionText.getText();
 		if (rangeFusion != null) {
@@ -3077,36 +3140,38 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 	}
 
 	private boolean imageChannelsInit = false;
+
 	private void initImageChannels(IntegratedWormData integratedData) {
-		if ( imageChannelsInit ) return;
+		if (imageChannelsInit)
+			return;
 		imageChannelsInit = true;
 		int numImages = integratedData.hyperstack.length;
 		String[] subDir = new String[numImages];
-		for ( int i = 0; i < numImages; i++ ) {
+		for (int i = 0; i < numImages; i++) {
 			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
 			int len = baseFileDir[i].length();
-			subDir[i] = baseFileDir[i].substring(index,len);
+			subDir[i] = baseFileDir[i].substring(index, len);
 			JCheckBox box = new JCheckBox(subDir[i], true);
 			box.setActionCommand(subDir[i]);
 			box.addActionListener(this);
-			imageChannels.add( box );
+			imageChannels.add(box);
 		}
 	}
-	
+
 	private int imageChannel(String cmd) {
 
 		int numImages = activeImage.hyperstack.length;
-		for ( int i = 0; i < numImages; i++ ) {
+		for (int i = 0; i < numImages; i++) {
 			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
 			int len = baseFileDir[i].length();
-			String subDir = baseFileDir[i].substring(index,len);
-			if ( subDir.equals(cmd) ) {
+			String subDir = baseFileDir[i].substring(index, len);
+			if (subDir.equals(cmd)) {
 				return i;
 			}
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * Creates or updates the histogram / LUT panel and opacity panels when a new
 	 * image is loaded.
@@ -3167,9 +3232,9 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 		int numImages = integratedData.hyperstack.length;
 		integratedData.volOpacityPanel = new JPanelVolumeOpacity[numImages];
-		for ( int i = 0; i < numImages; i++ ) {
-			integratedData.volOpacityPanel[i] = new JPanelVolumeOpacity(integratedData.hyperstack[i].GetImage(),
-					null, null,	null, true);
+		for (int i = 0; i < numImages; i++) {
+			integratedData.volOpacityPanel[i] = new JPanelVolumeOpacity(integratedData.hyperstack[i].GetImage(), null,
+					null, null, true);
 			integratedData.volOpacityPanel[i].addPropertyChangeListener(this);
 			TransferFunction kTransfer = integratedData.volOpacityPanel[i].getCompA().getOpacityTransferFunction();
 
@@ -3179,18 +3244,17 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		// System.err.println( "initHistoLUTPanel " +
 		// integratedData.volumeImage.getLUT() );
 		integratedData.lutHistogramPanel = new JFrameHistogram[numImages];
-		for ( int i = 0; i < numImages; i++ ) {
+		for (int i = 0; i < numImages; i++) {
 
-			integratedData.lutHistogramPanel[i] = new JFrameHistogram(this, integratedData.hyperstack[i].GetImage(), null,
-					integratedData.hyperstack[i].getLUT(), null);
-			integratedData.lutHistogramPanel[i].histogramLUT(true, false, false);//!integratedData.volumeImage.GetImage().isColorImage());
+			integratedData.lutHistogramPanel[i] = new JFrameHistogram(this, integratedData.hyperstack[i].GetImage(),
+					null, integratedData.hyperstack[i].getLUT(), null);
+			integratedData.lutHistogramPanel[i].histogramLUT(true, false, false);// !integratedData.volumeImage.GetImage().isColorImage());
 		}
-
 
 //		if (integratedData.volumeImage.GetImage().isColorImage()) {
 //			integratedData.displayBothChannels.setSelected(true);
 //		}
-		for ( int i = 0; i < numImages; i++ ) {
+		for (int i = 0; i < numImages; i++) {
 			integratedData.hyperstack[i].GetImage().addImageDisplayListener(this);
 		}
 	}
@@ -3201,13 +3265,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		// integratedData.lutHistogramPanel.getContainingPanel() );
 		int numImages = integratedData.hyperstack.length;
 		String[] subDir = new String[numImages];
-		if ( !integratedData.colorMapInit ) {
+		if (!integratedData.colorMapInit) {
 			integratedData.colorMapInit = true;
-			for ( int i = 0; i < numImages; i++ ) {
+			for (int i = 0; i < numImages; i++) {
 				int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
 				int len = baseFileDir[i].length();
-				subDir[i] = baseFileDir[i].substring(index,len);
-				if ( subDir[i].equals("405") ) {
+				subDir[i] = baseFileDir[i].substring(index, len);
+				if (subDir[i].equals("405")) {
 					// set transfer function:
 					ModelLUT lut = integratedData.hyperstack[i].GetLUT();
 					lut.makeBlueTransferFunctions();
@@ -3216,7 +3280,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					tf.replacePoint(64, 0, 2);
 					lut.makeLUT(256);
 				}
-				if ( subDir[i].equals("488") ) {
+				if (subDir[i].equals("488")) {
 					// set transfer function:
 					ModelLUT lut = integratedData.hyperstack[i].GetLUT();
 					lut.makeGreenTransferFunctions();
@@ -3225,7 +3289,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					tf.replacePoint(64, 0, 2);
 					lut.makeLUT(256);
 				}
-				if ( subDir[i].equals("561") ) {
+				if (subDir[i].equals("561")) {
 					// set transfer function:
 					ModelLUT lut = integratedData.hyperstack[i].GetLUT();
 					lut.makeRedTransferFunctions();
@@ -3234,7 +3298,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					tf.replacePoint(64, 0, 2);
 					lut.makeLUT(256);
 				}
-				if ( subDir[i].equals("637") ) {
+				if (subDir[i].equals("637")) {
 					// set transfer function:
 					ModelLUT lut = integratedData.hyperstack[i].GetLUT();
 					TransferFunction tf = lut.getTransferFunction();
@@ -3244,7 +3308,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				}
 			}
 		}
-		
+
 		// re-add lutTab to lutPanel due to removal in enableNext
 		if (lutPanel.getComponentCount() == 0) {
 			lutPanel.add(lutTab, BorderLayout.CENTER);
@@ -3254,52 +3318,52 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			opacityPanel.add(opacityTab, BorderLayout.CENTER);
 		}
 
-		opacityTab.removeAll();		
-		for ( int i = 0; i < numImages; i++ ) {
+		opacityTab.removeAll();
+		for (int i = 0; i < numImages; i++) {
 			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
 			int len = baseFileDir[i].length();
-			subDir[i] = baseFileDir[i].substring(index,len);
-			
-			opacityTab.addTab( subDir[i] + File.separator + integratedData.hyperstack[i].GetImage().getImageName(), 
-					null, integratedData.volOpacityPanel[i].getMainPanel() );
+			subDir[i] = baseFileDir[i].substring(index, len);
 
-			
-			final TransferFunction kTransfer = integratedData.volOpacityPanel[i].getCompA().getOpacityTransferFunction();
+			opacityTab.addTab(subDir[i] + File.separator + integratedData.hyperstack[i].GetImage().getImageName(), null,
+					integratedData.volOpacityPanel[i].getMainPanel());
+
+			final TransferFunction kTransfer = integratedData.volOpacityPanel[i].getCompA()
+					.getOpacityTransferFunction();
 			updateImages(integratedData.colormap, integratedData.hyperstack[i].GetImage(), kTransfer, i);
 			integratedData.volOpacityPanel[i].getCompA().showHistogram();
 			integratedData.hyperstack[i].UpdateImages(kTransfer, 0, null);
 
-			if ( integratedData.previewHS != null ) {
+			if (integratedData.previewHS != null) {
 				integratedData.previewHS[i].UpdateImages(kTransfer, 0, null);
 			}
 		}
 		if (tabbedPane.getSelectedComponent() == opacityPanel) {
 			int which = opacityTab.getSelectedIndex();
-			if ( which != -1 ) {
+			if (which != -1) {
 				integratedData.volOpacityPanel[which].getCompA().showHistogram();
 			}
 		}
 
 		lutTab.removeAll();
-		for ( int i = 0; i < numImages; i++ ) {
-			lutTab.addTab( subDir[i] + File.separator + integratedData.hyperstack[i].GetImage().getImageName(), 
-					null, integratedData.lutHistogramPanel[i].getContainingPanel());
-			updateImages(integratedData.colormap, integratedData.hyperstack[i].GetLUT(), i );
-			
+		for (int i = 0; i < numImages; i++) {
+			lutTab.addTab(subDir[i] + File.separator + integratedData.hyperstack[i].GetImage().getImageName(), null,
+					integratedData.lutHistogramPanel[i].getContainingPanel());
+			updateImages(integratedData.colormap, integratedData.hyperstack[i].GetLUT(), i);
+
 			integratedData.hyperstack[i].UpdateImages(integratedData.hyperstack[i].getLUT());
 
-			if ( integratedData.previewHS != null ) {
+			if (integratedData.previewHS != null) {
 				integratedData.previewHS[i].UpdateImages(integratedData.hyperstack[i].getLUT());
 			}
 			integratedData.lutHistogramPanel[i].redrawFrames();
 		}
 		if (tabbedPane.getSelectedComponent() == lutPanel) {
-			int which = lutTab.getSelectedIndex();			
-			if ( which != -1 ) {
+			int which = lutTab.getSelectedIndex();
+			if (which != -1) {
 				integratedData.lutHistogramPanel[which].redrawFrames();
 			}
 		}
-		
+
 		lutPanel.revalidate();
 	}
 
@@ -3336,10 +3400,10 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		// tabbedPane.addTab("Surface", null, lightsPanel);
 		// }
 	}
-	
-	private void updateSelectionPanel() {	
-	//	accurateModeChanged(activeImage.voiManager.isAccurateMode());
-		
+
+	private void updateSelectionPanel() {
+		// accurateModeChanged(activeImage.voiManager.isAccurateMode());
+
 		VOILatticeManagerInterface voiManager = activeImage.voiManager;
 		voiManager.setAccurateMode(voiManager.isAccurateMode());
 	}
@@ -3389,7 +3453,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 	}
 
 	private void saveIntegrated() {
-		activeImage.voiManager.setSharedDirectory( resultsDir(latticeFileDir, activeImage.wormImage));
+		activeImage.voiManager.setSharedDirectory(resultsDir(latticeFileDir, activeImage.wormImage));
 
 		if (editMode == EditSeamCells || editMode == CheckSeam) {
 			saveSeamCells();
@@ -3405,76 +3469,78 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		// separately so not untwisted twice:
 		saveSplineCurves();
 
-		if ( activeImage.voiManager != null ) {
+		if (activeImage.voiManager != null) {
 			// save annotations not in splines:
-			WormData.saveIntegratedMarkerAnnotations(resultsDir(latticeFileDir, activeImage.wormImage), activeImage.voiManager.getAnnotations());
+			WormData.saveIntegratedMarkerAnnotations(resultsDir(latticeFileDir, activeImage.wormImage),
+					activeImage.voiManager.getAnnotations());
 		}
 	}
-	
+
 	private void setDefaultInputList(String dir) {
 
 		File file = new File(dir);
-		if ( file.exists() && file.isDirectory() ) {
+		if (file.exists() && file.isDirectory()) {
 			final String[] list = file.list();
 			String imageList = "";
 			for (int i = 0; i < list.length; i++) {
-				if ( list[i].endsWith(".tif") ) {
-					String temp = list[i].substring(list[i].lastIndexOf("_") + 1, list[i].indexOf(".tif") );
+				if (list[i].endsWith(".tif")) {
+					String temp = list[i].substring(list[i].lastIndexOf("_") + 1, list[i].indexOf(".tif"));
 					System.err.println(list[i] + "   " + temp);
-					if ( imageList != "" ) imageList += ",";
+					if (imageList != "")
+						imageList += ",";
 					imageList += temp;
 				}
 			}
-			if ( imageList != "" ) {
+			if (imageList != "") {
 				rangeFusionText.setText(imageList);
 			}
 		}
 	}
-	
+
 	private class UntwistDialog extends JDialogBase implements ActionListener {
 		private JCheckBox[] volumeChecks;
 		private String[] volumeDirs;
 		private JTextField latticeOutputDir;
-		public UntwistDialog( String baseDir ) {
+
+		public UntwistDialog(String baseDir) {
 			File file = new File(baseDir);
-			if ( file.exists() && file.isDirectory() ) {
+			if (file.exists() && file.isDirectory()) {
 				final String[] list = file.list();
 				Vector<String> tempList = new Vector<String>();
 				for (int i = 0; i < list.length; i++) {
 					File subDir = new File(file.getAbsolutePath() + File.separator + list[i]);
-					if ( subDir.exists() && subDir.isDirectory() ) 
-					{	
+					if (subDir.exists() && subDir.isDirectory()) {
 						System.err.println(file.getAbsolutePath() + File.separator + list[i]);
 						tempList.add(list[i]);
 					}
 				}
-				if ( tempList.size() > 0 ) {
+				if (tempList.size() > 0) {
 					init(baseDir, tempList);
 					setVisible(true);
 				}
 			}
-		} 
-		
-		// Diyi: Created a simpler version of actionPerformed to replace the previous one
+		}
+
+		// Diyi: Created a simpler version of actionPerformed to replace the previous
+		// one
 		public void actionPerformed(ActionEvent event) {
 			String command = event.getActionCommand();
 			Object source = event.getSource();
 
 			System.err.println("UntwistDialog " + command);
-			if ( command.equals("Cancel") ) {
+			if (command.equals("Cancel")) {
 				baseFileLocText.setText("");
 				latticeOutputDir = null;
 				setVisible(false);
-			}
-			else if ( command.equals("OK") ) {
-				
+			} else if (command.equals("OK")) {
+
 				ArrayList<String> list = new ArrayList<>(volumeChecks.length);
-				
-				for (int i = 0; i < volumeChecks.length; i++){
+
+				for (int i = 0; i < volumeChecks.length; i++) {
 					if (volumeChecks[i].isSelected()) {
-					list.add(volumeDirs[i]);
+						list.add(volumeDirs[i]);
 					}
-					baseFileDir = new String [list.size()];
+					baseFileDir = new String[list.size()];
 					list.toArray(baseFileDir);
 				}
 				if (list.size() == 0)
@@ -3482,9 +3548,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				setVisible(false);
 			}
 		}
-		
-		
-		private void init( String baseDir, Vector<String> tempList ) {
+
+		private void init(String baseDir, Vector<String> tempList) {
 
 			setForeground(Color.black);
 			setTitle("Untwisting C.elegans - lattice - 2.0");
@@ -3493,57 +3558,58 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			} catch (FileNotFoundException e) {
 				Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
 			}
-			JPanel input = new JPanel( new GridLayout(tempList.size() + 1, 1));
+			JPanel input = new JPanel(new GridLayout(tempList.size() + 1, 1));
 			GuiBuilder gui = new GuiBuilder(this);
 			volumeChecks = new JCheckBox[tempList.size()];
 			volumeDirs = new String[tempList.size()];
 			String latticeDir = null;
-			for ( int i = 0; i < tempList.size(); i++ ) {
+			for (int i = 0; i < tempList.size(); i++) {
 				volumeChecks[i] = gui.buildCheckBox(tempList.elementAt(i), true);
 				volumeChecks[i].addActionListener(this);
 				input.add(volumeChecks[i].getParent());
 
 				volumeDirs[i] = new String(baseDir + File.separator + tempList.elementAt(i));
 				final File subDir = new File(volumeDirs[i]);
-				if ( latticeDir == null ) {
-					latticeDir =  new String(baseDir + File.separator + tempList.elementAt(i));
+				if (latticeDir == null) {
+					latticeDir = new String(baseDir + File.separator + tempList.elementAt(i));
 				}
-				if ( containsLattice(subDir) ) {
-					latticeDir =  new String(baseDir + File.separator + tempList.elementAt(i));
-				}		
-				
+				if (containsLattice(subDir)) {
+					latticeDir = new String(baseDir + File.separator + tempList.elementAt(i));
+				}
+
 			}
-			
-			latticeOutputDir = gui.buildFileField("Lattice Directory:", latticeDir, false, JFileChooser.DIRECTORIES_ONLY,
-					this);
+
+			latticeOutputDir = gui.buildFileField("Lattice Directory:", latticeDir, false,
+					JFileChooser.DIRECTORIES_ONLY, this);
 			input.add(latticeOutputDir.getParent());
-			
+
 			System.err.println(latticeDir);
 			getContentPane().add(input, BorderLayout.CENTER);
-			
+
 			JPanel buttonPanel = new JPanel();
-			buttonPanel.add(JDialogBase.buildOKButton( "OK", this ));
-			buttonPanel.add(JDialogBase.buildCancelButton( "Cancel", this ));
+			buttonPanel.add(JDialogBase.buildOKButton("OK", this));
+			buttonPanel.add(JDialogBase.buildCancelButton("Cancel", this));
 
 			getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
 			setModal(true);
-			if ( bar != null ) bar.setVisible(false);			
+			if (bar != null)
+				bar.setVisible(false);
 			pack();
 		}
-		
-		private boolean containsLattice(File dir ) {
 
-			if ( dir.exists() && dir.isDirectory() ) {
+		private boolean containsLattice(File dir) {
+
+			if (dir.exists() && dir.isDirectory()) {
 				final String[] list = dir.list();
-				for ( int i = 0; i < list.length; i++ ) {
-					if ( list[i].equals("lattice_final") ) {
+				for (int i = 0; i < list.length; i++) {
+					if (list[i].equals("lattice_final")) {
 						return true;
-					}
-					else {
-						File file = new File(dir.getAbsolutePath() + File.separator + list[i] );
-						if ( file.exists() && file.isDirectory() ) {
-							if ( containsLattice(file) ) return true;
+					} else {
+						File file = new File(dir.getAbsolutePath() + File.separator + list[i]);
+						if (file.exists() && file.isDirectory()) {
+							if (containsLattice(file))
+								return true;
 						}
 					}
 				}
@@ -3551,76 +3617,79 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			return false;
 		}
 	}
-	
+
 	public void setDemoValues() {
-		//baseFileLocText.setText("\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking");
+		// baseFileLocText.setText("\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking");
 		// X:\shrofflab\RW10752_NU\Untwisting\031219_RW10752_NU\RW10752_NU\RW10752_NU\Pos2\Decon_registered
-		
-		//diyi local test path: E:\Diyi\Pos2\Decon_registered
-		//String access_path = "E:\\Diyi\\Pos2\\Decon_registered";
-		
-		//from diyi error mimic path:    X:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB
-		//from jhonny:Z:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
-		//copied to diyi from jhonny: E:\Diyi\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
-		
-		//from online:\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking
-		//String access_path = "\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking";
-		
-		//from online jhonny: X:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
-		//String access_path = "X:\\shrofflab\\Vab-1\\Tracking\\Pos0\\SPIMB\\Reg_Sample\\For_Tracking";
-		
-		//String access_path = "E:\\Diyi\\SPIMB\\Reg_Sample\\For_Tracking";
+
+		// diyi local test path: E:\Diyi\Pos2\Decon_registered
+		// String access_path = "E:\\Diyi\\Pos2\\Decon_registered";
+
+		// from diyi error mimic path:
+		// X:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB
+		// from
+		// jhonny:Z:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
+		// copied to diyi from jhonny:
+		// E:\Diyi\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
+
+		// from
+		// online:\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking
+		// String access_path =
+		// "\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking";
+
+		// from online jhonny:
+		// X:\shrofflab\Vab-1\Tracking\Pos0\SPIMB\Reg_Sample\For_Tracking\RegB\Decon_reg_14\Decon_reg_14_results
+		// String access_path =
+		// "X:\\shrofflab\\Vab-1\\Tracking\\Pos0\\SPIMB\\Reg_Sample\\For_Tracking";
+
+		// String access_path = "E:\\Diyi\\SPIMB\\Reg_Sample\\For_Tracking";
 		String access_path = "D:\\shroff\\For_Tracking";
 
 		baseFileLocText.setText(access_path);
 		editLattice.setSelected(true);
-		//actionPerformed(new ActionEvent(this, 0, "BrowseConclude"));
-		
+		// actionPerformed(new ActionEvent(this, 0, "BrowseConclude"));
+
 		String[] volumeDirs;
-		
+
 		String baseDir = baseFileLocText.getText();
 		File file = new File(baseDir);
-		
+
 		final String[] list = file.list();
 		Vector<String> tempList = new Vector<String>();
 		for (int i = 0; i < list.length; i++) {
 			File subDir = new File(file.getAbsolutePath() + File.separator + list[i]);
-			if ( subDir.exists() && subDir.isDirectory() ) 
-			{	
+			if (subDir.exists() && subDir.isDirectory()) {
 				System.err.println(file.getAbsolutePath() + File.separator + list[i]);
-				if (list[i].equals("RegA") || list[i].equals("RegB"))
-				{
+				if (list[i].equals("RegA") || list[i].equals("RegB")) {
 					tempList.add(list[i]);
 				}
 			}
 		}
-		
+
 		volumeDirs = new String[tempList.size()];
-		
+
 		int count = 0;
-		for ( int i = 0; i < volumeDirs.length; i++ ) {
-				count++;
+		for (int i = 0; i < volumeDirs.length; i++) {
+			count++;
 			volumeDirs[i] = new String(baseDir + File.separator + tempList.elementAt(i));
 		}
-		if ( count == 0 ) {
+		if (count == 0) {
 			baseFileLocText.setText("");
-			//latticeOutputDir = null;
-		}
-		else {
+			// latticeOutputDir = null;
+		} else {
 			baseFileDir = new String[count];
 			count = 0;
-			for ( int i = 0; i < volumeDirs.length; i++ ) {
+			for (int i = 0; i < volumeDirs.length; i++) {
 				baseFileDir[count++] = volumeDirs[i];
 			}
 		}
 
-		//baseFileLocText.setText("\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking\\RegB");
+		// baseFileLocText.setText("\\\\nearline4.hhmi.org\\shroff\\shrofflab\\efn-1\\Tracking\\Pos0\\For_Tracking\\RegB");
 
 		latticeFileDir = new String(access_path + "\\RegB");
 		setDefaultInputList(latticeFileDir);
 		rangeFusionText.setText("60-61");
-		
+
 		actionPerformed(new ActionEvent(this, 0, "start"));
 	}
 }
-
