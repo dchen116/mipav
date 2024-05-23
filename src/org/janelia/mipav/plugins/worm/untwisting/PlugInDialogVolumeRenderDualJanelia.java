@@ -78,9 +78,13 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
@@ -94,6 +98,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -129,8 +134,9 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.RectangleAnchor;
-import org.jfree.ui.TextAnchor;
+import org.jfree.chart.ui.Layer;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.TextAnchor;
 import org.jocl.Sizeof;
 
 import WildMagic.LibFoundation.Mathematics.Mathf;
@@ -2198,7 +2204,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	private JPanel plotPanel;
 
 	// create a chart image from the values obtained via annotations
-	public static BufferedImage createChartImage(List<Float> values, String title) throws IOException {
+	public static JFreeChart createChart(List<Float> values, String title) throws IOException {
         XYSeries series = new XYSeries("Data");
         float maxValue = -Float.MAX_VALUE;
         int maxIndex = -1;
@@ -2232,20 +2238,24 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
         marker.setLabelAnchor(RectangleAnchor.CENTER);
         marker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
         plot.addDomainMarker(marker);
-
-        BufferedImage chartImage = new BufferedImage(400, 600, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = chartImage.createGraphics();
-        chart.draw(g2, new java.awt.Rectangle(0, 0, 400, 600));
-        g2.dispose();
-
-        return chartImage;
+        
+        
+        return chart;
     }
+	
+	JFreeChart selectionChart;
 
 	// update the plot panel in responding to the clicking
-	public void updatePlotPanel(List<Float> values, String title) {
+	public void updatePlotPanel(List<Float> values, String title) { 
 		SwingUtilities.invokeLater(() -> {
 			try {
-				BufferedImage chartImage = createChartImage(values, title);
+				selectionChart = createChart(values, title);
+				
+				BufferedImage chartImage = new BufferedImage(400, 600, BufferedImage.TYPE_INT_RGB);
+		        Graphics2D g2 = chartImage.createGraphics();
+				selectionChart.draw(g2, new Rectangle(0, 0, 400, 600));
+		        g2.dispose();
+				
 				plotLabel.setIcon(new ImageIcon(chartImage));
 				plotPanel.revalidate();
 				plotPanel.repaint();
@@ -2254,6 +2264,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			}
 		});
 	}
+
 
 	/**
 	 * User-interface initialization. If the UI is integrated all panels are
@@ -2385,6 +2396,32 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		plotPanel = new JPanel(new BorderLayout());
 		plotPanel.setBorder(new TitledBorder("Plot"));
 		plotLabel = new JLabel();
+		plotLabel.addMouseMotionListener(new MouseAdapter() {
+			public void mouseDragged(MouseEvent e) {	
+				Point p = e.getPoint();
+				System.out.println(p);
+				
+				Rectangle plotArea = new Rectangle(0, 0, 400, 600);
+				XYPlot plot = (XYPlot) selectionChart.getPlot();
+				Collection dm = plot.getDomainMarkers(Layer.FOREGROUND);
+				ValueMarker firstDM = (ValueMarker) dm.toArray()[0];
+				double xValue = plot.getDomainAxis().java2DToValue(p.getX(), plotArea, plot.getDomainAxisEdge());
+				firstDM.setValue(xValue);
+				
+                XYSeries series = ((XYSeriesCollection) plot.getDataset()).getSeries(0);
+                double yValue = series.getY((int) xValue).doubleValue();
+                firstDM.setLabel("Value: " + yValue);
+				
+				BufferedImage chartImage = new BufferedImage(400, 600, BufferedImage.TYPE_INT_RGB);
+		        Graphics2D g2 = chartImage.createGraphics();
+				selectionChart.draw(g2, new Rectangle(0, 0, 400, 600));
+		        g2.dispose();
+				
+				plotLabel.setIcon(new ImageIcon(chartImage));
+				plotPanel.revalidate();
+				plotPanel.repaint();
+			}
+		});
 		plotPanel.add(plotLabel, BorderLayout.CENTER);
 		accuratePanel.add(plotPanel, BorderLayout.SOUTH);
 
