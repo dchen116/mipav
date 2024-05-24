@@ -44,7 +44,6 @@ public class BatchProcessLogFrame implements ActionListener {
 		// write code here
 		this.frame = new JFrame("Batch Process Log");
 		this.layout = new FlowLayout();
-		//this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		createGUI();
 	}
@@ -132,7 +131,6 @@ public class BatchProcessLogFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		String data = textArea.getText().trim(); // read contents of text area into 'data'
 		if (!data.equals("")) {
