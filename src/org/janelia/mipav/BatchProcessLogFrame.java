@@ -44,6 +44,7 @@ public class BatchProcessLogFrame implements ActionListener {
 		// write code here
 		this.frame = new JFrame("Batch Process Log");
 		this.layout = new FlowLayout();
+		//this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		createGUI();
 	}
