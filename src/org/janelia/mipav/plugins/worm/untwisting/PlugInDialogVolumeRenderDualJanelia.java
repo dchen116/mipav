@@ -85,8 +85,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -98,6 +100,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
@@ -127,7 +130,11 @@ import javax.swing.ImageIcon;
 
 import org.janelia.mipav.test.Plot;
 import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.event.MarkerChangeEvent;
+import org.jfree.chart.event.MarkerChangeListener;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
@@ -2199,12 +2206,12 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		progress.dispose();
 		progress = null;
 	}
-
-	private JLabel plotLabel;
-	private JPanel plotPanel;
+	
+	private JFreeChart selectionChart;
+	private ChartPanel chartPanel;
 
 	// create a chart image from the values obtained via annotations
-	public static JFreeChart createChart(List<Float> values, String title) throws IOException {
+	public JFreeChart createChart(List<Float> values, String title) {
         XYSeries series = new XYSeries("Data");
         float maxValue = -Float.MAX_VALUE;
         int maxIndex = -1;
@@ -2239,31 +2246,36 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
         marker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
         plot.addDomainMarker(marker);
         
-        
+        marker.addChangeListener(new MarkerChangeListener() {
+            @Override
+            public void markerChanged(MarkerChangeEvent event) {
+                System.out.println("Marker changed");
+            }
+        });
+
         return chart;
-    }
-	
-	JFreeChart selectionChart;
+	}
 
 	// update the plot panel in responding to the clicking
-	public void updatePlotPanel(List<Float> values, String title) { 
-		SwingUtilities.invokeLater(() -> {
-			try {
-				selectionChart = createChart(values, title);
-				
-				BufferedImage chartImage = new BufferedImage(400, 600, BufferedImage.TYPE_INT_RGB);
-		        Graphics2D g2 = chartImage.createGraphics();
-				selectionChart.draw(g2, new Rectangle(0, 0, 400, 600));
-		        g2.dispose();
-				
-				plotLabel.setIcon(new ImageIcon(chartImage));
-				plotPanel.revalidate();
-				plotPanel.repaint();
-			} catch (IOException e) {
-				System.err.println("Error updating plot: " + e.getMessage());
-			}
-		});
-	}
+	public void updatePlotPanel(List<Float> values, String title) {
+        SwingUtilities.invokeLater(() -> {
+            selectionChart = createChart(values, title);
+            chartPanel.setChart(selectionChart);
+            
+            
+    		chartPanel.setPreferredSize(new Dimension(600, 400));
+    		chartPanel.setMouseWheelEnabled(true);
+    		
+    		chartPanel.setDomainZoomable(false);
+    		chartPanel.setRangeZoomable(false);
+    		chartPanel.setMouseZoomable(false, false);
+    		chartPanel.setFillZoomRectangle(false);
+    		chartPanel.setZoomAroundAnchor(false);
+
+            chartPanel.revalidate();
+            chartPanel.repaint();
+        });
+    }
 
 
 	/**
@@ -2391,39 +2403,51 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		// Add the accurateModeButton to the buttonPanel, then add the buttonPanel to
 		// the accuratePanel
 		buttonPanel.add(accurateModeButton);
-		accuratePanel.add(buttonPanel, BorderLayout.CENTER);
+		accuratePanel.add(buttonPanel, BorderLayout.NORTH);
+				
+		selectionChart = createChart(Arrays.asList(1.0f, 2.0f, 3.0f), "Chart");
+		chartPanel = new ChartPanel(selectionChart);
 
-		plotPanel = new JPanel(new BorderLayout());
-		plotPanel.setBorder(new TitledBorder("Plot"));
-		plotLabel = new JLabel();
-		plotLabel.addMouseMotionListener(new MouseAdapter() {
-			public void mouseDragged(MouseEvent e) {	
-				Point p = e.getPoint();
-				System.out.println(p);
-				
-				Rectangle plotArea = new Rectangle(0, 0, 400, 600);
-				XYPlot plot = (XYPlot) selectionChart.getPlot();
-				Collection dm = plot.getDomainMarkers(Layer.FOREGROUND);
-				ValueMarker firstDM = (ValueMarker) dm.toArray()[0];
-				double xValue = plot.getDomainAxis().java2DToValue(p.getX(), plotArea, plot.getDomainAxisEdge());
-				firstDM.setValue(xValue);
-				
-                XYSeries series = ((XYSeriesCollection) plot.getDataset()).getSeries(0);
-                double yValue = series.getY((int) xValue).doubleValue();
-                firstDM.setLabel("Value: " + yValue);
-				
-				BufferedImage chartImage = new BufferedImage(400, 600, BufferedImage.TYPE_INT_RGB);
-		        Graphics2D g2 = chartImage.createGraphics();
-				selectionChart.draw(g2, new Rectangle(0, 0, 400, 600));
-		        g2.dispose();
-				
-				plotLabel.setIcon(new ImageIcon(chartImage));
-				plotPanel.revalidate();
-				plotPanel.repaint();
+		chartPanel.addMouseMotionListener(new MouseAdapter() {
+			@Override
+			public void mouseDragged(MouseEvent e) {
+
+				Rectangle2D plotArea = chartPanel.getScreenDataArea();
+				XYPlot plot = selectionChart.getXYPlot();
+				ValueAxis xAxis = plot.getDomainAxis();
+				double x = xAxis.java2DToValue(e.getX(), plotArea, plot.getDomainAxisEdge());
+
+				// Calculate the corresponding Y-value
+				XYSeriesCollection dataset = (XYSeriesCollection) plot.getDataset();
+				XYSeries series = dataset.getSeries(0);
+
+		        int index = findNearestXIndex(series, x);
+		        double y = series.getY(index).doubleValue();
+		        
+				ValueMarker marker = (ValueMarker) plot.getDomainMarkers(Layer.FOREGROUND).iterator().next();
+				marker.setValue(x);
+		        marker.setLabel(String.format("Value: %.2f", y));
+
+				chartPanel.repaint();
+				e.consume();
 			}
+			
+			private int findNearestXIndex(XYSeries series, double x) {
+		        double minDistance = Double.MAX_VALUE;
+		        int nearestIndex = -1;
+
+		        for (int i = 0; i < series.getItemCount(); i++) {
+		            double distance = Math.abs(series.getX(i).doubleValue() - x);
+		            if (distance < minDistance) {
+		                minDistance = distance;
+		                nearestIndex = i;
+		            }
+		        }
+		        return nearestIndex;
+		    }		
 		});
-		plotPanel.add(plotLabel, BorderLayout.CENTER);
-		accuratePanel.add(plotPanel, BorderLayout.SOUTH);
+
+	    accuratePanel.add(chartPanel, BorderLayout.CENTER);
 
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("LUT", null, lutPanel);
