@@ -859,6 +859,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	{
 		List<Float> plotAccurateValues = new ArrayList<>();
 		List<Float> plotValues = new ArrayList<>();
+		List<Vector3f> points = new ArrayList<>();
+		
 		
 		m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
 				Float.MAX_VALUE);
@@ -1006,6 +1008,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 						plotValues.add(value);
 						output.writeData(p0.X, p0.Y, p0.Z, value);
 					}
+					Vector3f p2 = new Vector3f();
+					p2.copy(p0);
+					points.add(p2);
 				}
 
 
@@ -1073,9 +1078,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			}
 		}
 		if (m_kVOIInterface.isAccurateMode()) {
-			setPlot(plotAccurateValues, "Accurate Values");
+			setPlot(points, plotAccurateValues, "Accurate Values");
 		} else {
-			setPlot(plotValues, "3-Color Values");
+			setPlot(points, plotValues, "3-Color Values");
 		}
 	}
 
@@ -1083,9 +1088,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	private Set<PlotListener> listeners = new HashSet<>();
 
 	// update all listeners with new plot values and title.
-	public void setPlot(List<Float> values, String title) {
+	public void setPlot(List<Vector3f> points, List<Float> values, String title) {
 		for (PlotListener listener : listeners) {
-			listener.updatePlotPanel(values, title);
+			listener.updatePlotPanel(points, values, title);
 		}
 	}
 

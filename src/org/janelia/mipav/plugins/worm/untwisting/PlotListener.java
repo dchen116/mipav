@@ -2,6 +2,8 @@ package org.janelia.mipav.plugins.worm.untwisting;
 
 import java.util.List;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 /**
  * Interface for handling updates to a plot panel. Classes that need to respond
  * to plot data changes should implement this interface. An instance of a class
@@ -16,12 +18,13 @@ public interface PlotListener {
 
 	/**
 	 * Invoked to update the plot panel with new data.
+	 * @param points 
 	 * 
 	 * @param values The list of data values to plot. Each value represents a data
 	 *               point on the plot.
 	 * @param title  The title of the plot, describing the data or context of what
 	 *               is being displayed
 	 */
-	void updatePlotPanel(List<Float> values, String title);
+	void updatePlotPanel(List<Vector3f> points, List<Float> values, String title);
 
 }

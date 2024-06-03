@@ -2209,6 +2209,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	
 	private JFreeChart selectionChart;
 	private ChartPanel chartPanel;
+	private List<Vector3f> chart3DPoints;
 
 	// create a chart image from the values obtained via annotations
 	public JFreeChart createChart(List<Float> values, String title) {
@@ -2237,6 +2238,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
         renderer.setSeriesPaint(0, Color.BLUE);
         renderer.setSeriesStroke(0, new BasicStroke(2.0f));
         plot.setRenderer(renderer);
+       
 
         // Add a marker to show the maximum value
         ValueMarker marker = new ValueMarker(maxIndex);
@@ -2246,18 +2248,65 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
         marker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
         plot.addDomainMarker(marker);
         
-        marker.addChangeListener(new MarkerChangeListener() {
-            @Override
-            public void markerChanged(MarkerChangeEvent event) {
-                System.out.println("Marker changed");
-            }
-        });
+		marker.addChangeListener(new MarkerChangeListener() {
+			@Override
+			public void markerChanged(MarkerChangeEvent event) {
+				ValueMarker marker = (ValueMarker) event.getMarker();
 
-        return chart;
+				float tq = (float) marker.getValue();
+
+				int t0 = (int) Math.floor(tq);
+				int t1 = (int) Math.ceil(tq);
+				
+				if (t0 >= 0 && t1 < chart3DPoints.size() && t0 != t1) {
+
+					Vector3f interpolatedPoint = interpolate(t0, t1, tq);
+					System.out.println("Interpolated 3D Point at index: " + tq + " is ptq: " + interpolatedPoint);
+					update3DModel(interpolatedPoint);
+					
+				} else if (t0 == t1 && t0 < chart3DPoints.size()) { // if t0 == t1
+					Vector3f exactPoint = chart3DPoints.get(t0);
+					System.out.println("Exact 3D Point at index: " + t0 + " is ptq: " + exactPoint);
+					update3DModel(exactPoint);
+				}
+			}
+				
+
+			private void update3DModel(Vector3f point) {
+				
+				//add something
+				System.out.println("Updating 3D model for point: " + point);
+				activeImage.voiManager.modify3DMarker(point, point, point);
+			}
+
+			public Vector3f interpolate(int t0, int t1, float tq) {
+				Vector3f pt0 = chart3DPoints.get(t0);
+				Vector3f pt1 = chart3DPoints.get(t1);
+				System.out.println("pt0: "+ pt0);
+				System.out.println("pt1: " + pt1);
+				float m0 = (t1 - tq) / (t1 - t0);
+				float m1 = (tq - t0) / (t1 - t0);
+
+				float x = (float) (m0 * pt0.X + m1 * pt1.X);
+				float y = (float) (m0 * pt0.Y + m1 * pt1.Y);
+				float z = (float) (m0 * pt0.Z + m1 * pt1.Z);
+				
+				//pt0 = pt0.scale(m0);
+				//pt1 = pt1.scale(m1);
+				//Vector3f ptq = Vector3f.add(pt0, pt1);
+
+				Vector3f ptq = new Vector3f(x, y, z);
+
+				return ptq;
+			}
+		});
+
+		return chart;
 	}
+	
 
 	// update the plot panel in responding to the clicking
-	public void updatePlotPanel(List<Float> values, String title) {
+	public void updatePlotPanel(List<Vector3f> points, List<Float> values, String title) {
         SwingUtilities.invokeLater(() -> {
             selectionChart = createChart(values, title);
             chartPanel.setChart(selectionChart);
@@ -2271,6 +2320,9 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
     		chartPanel.setMouseZoomable(false, false);
     		chartPanel.setFillZoomRectangle(false);
     		chartPanel.setZoomAroundAnchor(false);
+    		
+    		chart3DPoints = points;
+    		
 
             chartPanel.revalidate();
             chartPanel.repaint();
