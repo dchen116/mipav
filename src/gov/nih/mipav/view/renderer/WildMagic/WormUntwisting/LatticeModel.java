@@ -8427,6 +8427,8 @@ public class LatticeModel {
 		}
 		if (right.getCurves().size() == 0) {
 			updateLatticeListeners();
+			// added updateSelected() to fix the movable of first 3D marker to reflects the
+			// mourseDrag of the marker in the plot
 			updateSelected();
 			return;
 		}
