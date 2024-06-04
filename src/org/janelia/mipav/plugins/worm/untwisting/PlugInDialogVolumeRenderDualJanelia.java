@@ -166,7 +166,7 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
  */
 public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		implements ActionListener, RendererListener, PropertyChangeListener, ViewImageUpdateInterface, WindowListener,
-		ChangeListener, AccurateModeListener, PlotListener {
+		ChangeListener, AccurateModeListener, PlotDataUpdateListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 

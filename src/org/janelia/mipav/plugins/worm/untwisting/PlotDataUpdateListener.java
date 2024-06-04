@@ -14,7 +14,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * 
  * @author diyi chen
  */
-public interface PlotListener {
+public interface PlotDataUpdateListener {
 
 	/**
 	 * Invoked to update the plot panel with new data.

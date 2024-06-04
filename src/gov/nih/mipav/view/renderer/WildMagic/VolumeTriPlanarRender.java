@@ -66,7 +66,7 @@ import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.KeyStroke;
 
 import org.janelia.mipav.plugins.worm.untwisting.AccurateModeListener;
-import org.janelia.mipav.plugins.worm.untwisting.PlotListener;
+import org.janelia.mipav.plugins.worm.untwisting.PlotDataUpdateListener;
 import org.janelia.mipav.plugins.worm.untwisting.PlugInDialogVolumeRenderDualJanelia;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -1071,22 +1071,22 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	}
 
 	// Create a Set to hold PlotListener instances
-	private Set<PlotListener> listeners = new HashSet<>();
+	private Set<PlotDataUpdateListener> listeners = new HashSet<>();
 
 	// update all listeners with new plot values and title.
 	public void notifyPlotListeners(List<Vector3f> points, List<Float> values, String title) {
-		for (PlotListener listener : listeners) {
+		for (PlotDataUpdateListener listener : listeners) {
 			listener.updatePlotPanel(points, values, title);
 		}
 	}
 
 	//  add a new PlotListener
-	public void addPlotListener(PlotListener listener) {
+	public void addPlotListener(PlotDataUpdateListener listener) {
 		listeners.add(listener);
 	}
 	
 	// remove an existing PlotListener
-	public void removePlotListener(PlotListener listener) {
+	public void removePlotListener(PlotDataUpdateListener listener) {
 		listeners.remove(listener);
 	}
 
