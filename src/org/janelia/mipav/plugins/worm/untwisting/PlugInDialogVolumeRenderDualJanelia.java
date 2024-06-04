@@ -285,6 +285,10 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	private Vector<String> annotationNames;
 	private JSplitPane latticePanel = null;
 	private JPanel latticePanelSingle = null;
+		
+	private JFreeChart selectionChart;
+	private ChartPanel chartPanel;
+	private List<Vector3f> chart3DPoints;
 
 	private class IntegratedWormData {
 		private VOIVector annotations;
@@ -2215,10 +2219,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		progress.dispose();
 		progress = null;
 	}
-	
-	private JFreeChart selectionChart;
-	private ChartPanel chartPanel;
-	private List<Vector3f> chart3DPoints;
 
 	/**
 	 * Creates a chart using a list of values and assigns it a title. Each value in
