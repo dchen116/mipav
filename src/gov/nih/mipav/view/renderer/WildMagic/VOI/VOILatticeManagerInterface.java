@@ -1096,66 +1096,73 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		defaultVoxelSize = new JTextField( "" + VoxelSize );
 		defaultVoxelSize.addActionListener(this);
 		JPanel panel = new JPanel( new GridLayout(1, 3) );
-		panel.add( new JLabel( "Current Voxel Size" ) );
-		panel.add( defaultVoxelSize );
-		panel.add( new JLabel("um") );
+		panel.add(new JLabel("Current Voxel Size"));
+		panel.add(defaultVoxelSize);
+		panel.add(new JLabel("um"));
 
 		updateVoxelSize = new JDialog();
 		updateVoxelSize.getContentPane().setLayout(new BorderLayout());
-		updateVoxelSize.setModalityType( JDialog.ModalityType.APPLICATION_MODAL);    	
-		updateVoxelSize.getContentPane().add( panel, BorderLayout.NORTH );
-		updateVoxelSize.getContentPane().add( OK, BorderLayout.SOUTH );
+		updateVoxelSize.setModalityType(JDialog.ModalityType.APPLICATION_MODAL);
+		updateVoxelSize.getContentPane().add(panel, BorderLayout.NORTH);
+		updateVoxelSize.getContentPane().add(OK, BorderLayout.SOUTH);
 		updateVoxelSize.pack();
 		updateVoxelSize.setResizable(false);
 
 		MipavUtil.centerOnScreen(updateVoxelSize);
 		updateVoxelSize.setVisible(true);
 	}
-	
-    public void mouseReleased(MouseEvent e) {
+
+	// Handle event when mouse button is released
+	public void mouseReleased(MouseEvent e) {
 		movingPickedPoint = false;
-		if(editingCrossSections) {
+		if (editingCrossSections) {
 			latticeModel.showLattice(true);
 		}
-    }
+	}
 
+	// Handle key press events if the key is pressed
 	public void keyPressed(KeyEvent e) {
 		isShiftSelected = e.isShiftDown();
 
 	}
-	
-	
-	private boolean accurateMode = true;
-    // TODO: might want to change the array into set
-    private List<AccurateModeListener> listeners = new ArrayList<>();
-	
-    public boolean isAccurateMode() {
-        return accurateMode;
-    }
 
+	// Maintains state for accurate mode and listeners for its changes
+	private boolean accurateMode = true;
+	// List of listeners that will be notified when accurate mode changes
+	// TODO: might want to change the array into set
+	private List<AccurateModeListener> listeners = new ArrayList<>();
+
+	// Check if the accurate mode is currently enabled
+	public boolean isAccurateMode() {
+		return accurateMode;
+	}
+
+	// Toggle the accurate mode state and notify all listeners
 	public void toggleAccurateMode() {
 		accurateMode = !accurateMode;
 		setAccurateMode(accurateMode);
 	}
-    
+
+	// Set the accurate mode and notify listeners about the mode change
 	public void setAccurateMode(boolean accurateMode) {
 		this.accurateMode = accurateMode;
 		for (AccurateModeListener listener : listeners) {
 			listener.accurateModeChanged(accurateMode);
 		}
 	}
- 
-    public void addAccurateModeListener(AccurateModeListener listener) {
-        listeners.add(listener);
-    }
 
-    
+	// Add a new listener to be notified about accurate mode changes
+	public void addAccurateModeListener(AccurateModeListener listener) {
+		listeners.add(listener);
+	}
+
+	// Handle key release events and perform actions based on the key released
 	public void keyReleased(KeyEvent e) {
 		isShiftSelected = e.isShiftDown();
 		movingPickedPoint = false;
-
 		System.out.println(e.getKeyChar());
-		
+
+		// Specific actions based on key codes, e.g., toggle accurate mode on 'M' key
 		if (e.getKeyCode() == KeyEvent.VK_M) {
 			toggleAccurateMode();
 		}

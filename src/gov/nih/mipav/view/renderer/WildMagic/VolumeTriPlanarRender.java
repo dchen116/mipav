@@ -68,7 +68,6 @@ import javax.swing.KeyStroke;
 import org.janelia.mipav.plugins.worm.untwisting.AccurateModeListener;
 import org.janelia.mipav.plugins.worm.untwisting.PlotListener;
 import org.janelia.mipav.plugins.worm.untwisting.PlugInDialogVolumeRenderDualJanelia;
-import org.janelia.mipav.test.ValueOutput;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Mathf;
@@ -857,10 +856,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	
 	private void PickVolume3D(Vector3f kPos, Vector3f kDir, Vector3f maxPtAccurate) 
 	{
+		// Lists to store values and points for plot updates or further processing
 		List<Float> plotAccurateValues = new ArrayList<>();
 		List<Float> plotValues = new ArrayList<>();
 		List<Vector3f> points = new ArrayList<>();
-		
 		
 		m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
 				Float.MAX_VALUE);
@@ -874,8 +873,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			float distances[] = new float[m_kPicker.Records.size()];
 			
 			long time = System.currentTimeMillis();
-			ValueOutput outputAccurate = new ValueOutput("outputAccurate" + time + ".csv");
-			ValueOutput output = new ValueOutput("output" + time + ".csv");
 			
 			for ( int i = 0; i < m_kPicker.Records.size(); i++ )
 			{
@@ -970,9 +967,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							maxValueAccurate = valueAccurate;
 							maxPtAccurate.copy(p0);
 						}
-						plotAccurateValues.add(valueAccurate);
-						// Write data to CSV
-						outputAccurate.writeData(p0.X, p0.Y, p0.Z, valueAccurate);
+						plotAccurateValues.add(valueAccurate);// add value to the list for plotting
 					
 					} else {
 						//this is not working, made for more than 3 colors. -Diyi Chen May 1, 2024
@@ -1005,21 +1000,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							maxValue = value;
 							maxPt.copy(p0);
 						}
-						plotValues.add(value);
-						output.writeData(p0.X, p0.Y, p0.Z, value);
+						plotValues.add(value);// add value to the list for plotting
 					}
 					Vector3f p2 = new Vector3f();
 					p2.copy(p0);
 					points.add(p2);
 				}
-
-
-				output.writeData(maxPt.X, maxPt.Y, maxPt.Z, maxValue);
-				outputAccurate.writeData(maxPtAccurate.X, maxPtAccurate.Y, maxPtAccurate.Z, maxValueAccurate);
-
-				// Close the output stream
-				outputAccurate.close();
-				output.close();
 				
 				if (!m_kVOIInterface.isAccurateMode()) {
 					maxValueAccurate = maxValue;
