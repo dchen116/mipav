@@ -1064,9 +1064,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			}
 		}
 		if (m_kVOIInterface.isAccurateMode()) {
-			setPlot(points, plotAccurateValues, "Accurate Values");
+			notifyPlotListeners(points, plotAccurateValues, "Accurate Values");
 		} else {
-			setPlot(points, plotValues, "3-Color Values");
+			notifyPlotListeners(points, plotValues, "3-Color Values");
 		}
 	}
 
@@ -1074,7 +1074,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	private Set<PlotListener> listeners = new HashSet<>();
 
 	// update all listeners with new plot values and title.
-	public void setPlot(List<Vector3f> points, List<Float> values, String title) {
+	public void notifyPlotListeners(List<Vector3f> points, List<Float> values, String title) {
 		for (PlotListener listener : listeners) {
 			listener.updatePlotPanel(points, values, title);
 		}
