@@ -8427,6 +8427,7 @@ public class LatticeModel {
 		}
 		if (right.getCurves().size() == 0) {
 			updateLatticeListeners();
+			updateSelected();
 			return;
 		}
 		
