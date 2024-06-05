@@ -1160,7 +1160,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	public void keyReleased(KeyEvent e) {
 		isShiftSelected = e.isShiftDown();
 		movingPickedPoint = false;
-		System.out.println(e.getKeyChar());
 
 		// Specific actions based on key codes, e.g., toggle accurate mode on 'M' key
 		if (e.getKeyCode() == KeyEvent.VK_M) {

@@ -2308,8 +2308,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			public Vector3f interpolate(int t0, int t1, float tq) {
 				Vector3f pt0 = chart3DPoints.get(t0);
 				Vector3f pt1 = chart3DPoints.get(t1);
-				System.out.println("pt0: " + pt0);
-				System.out.println("pt1: " + pt1);
+
 				float m0 = (t1 - tq) / (t1 - t0);
 				float m1 = (tq - t0) / (t1 - t0);
 
