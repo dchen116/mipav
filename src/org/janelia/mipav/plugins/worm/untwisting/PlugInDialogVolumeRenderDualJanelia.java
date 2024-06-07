@@ -286,9 +286,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	private JSplitPane latticePanel = null;
 	private JPanel latticePanelSingle = null;
 		
-	private JFreeChart selectionChart;
-	private ChartPanel chartPanel;
-	private List<Vector3f> chart3DPoints;
+	private CustomChartPanel chartPanel;
+
 
 	private class IntegratedWormData {
 		private VOIVector annotations;
@@ -2221,111 +2220,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	}
 
 	/**
-	 * Creates a chart using a list of values and assigns it a title. Each value in
-	 * the list is plotted against its index.
-	 * 
-	 * @param values List of floating-point values for the Y-axis.
-	 * @param title  Title of the chart.
-	 * @return A JFreeChart object fully initialized.
-	 */
-	public JFreeChart createChart(List<Float> values, String title) {
-		XYSeries series = new XYSeries("Data");
-		float maxValue = -Float.MAX_VALUE;
-		int maxIndex = -1;
-
-		// Populate the series with values and track the maximum value and its index
-		for (int i = 0; i < values.size(); i++) {
-			float value = values.get(i);
-			series.add(i, value);
-			if (value > maxValue) {
-				maxValue = value;
-				maxIndex = i;
-			}
-		}
-
-		XYSeriesCollection dataset = new XYSeriesCollection();
-		dataset.addSeries(series);
-
-		// Create the chart
-		JFreeChart chart = ChartFactory.createXYLineChart(title, "Index", "Value", dataset, PlotOrientation.VERTICAL,
-				true, true, false);
-
-		XYPlot plot = chart.getXYPlot();
-		XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-		renderer.setSeriesPaint(0, Color.BLUE);
-		renderer.setSeriesStroke(0, new BasicStroke(2.0f));
-		plot.setRenderer(renderer);
-
-		// Add a dynamic marker at the position of the maximum value
-		ValueMarker marker = new ValueMarker(maxIndex);
-		marker.setPaint(Color.RED);
-		marker.setLabel("Max Value: " + maxValue);
-		marker.setLabelAnchor(RectangleAnchor.CENTER);
-		marker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
-		plot.addDomainMarker(marker);
-
-		// Set up a marker change listener to handle marker position changes
-		marker.addChangeListener(new MarkerChangeListener() {
-			@Override
-			public void markerChanged(MarkerChangeEvent event) {
-				ValueMarker marker = (ValueMarker) event.getMarker();
-
-				float tq = (float) marker.getValue();
-
-				// Calculate the indices for interpolation
-				int t0 = (int) Math.floor(tq);
-				int t1 = (int) Math.ceil(tq);
-
-				if (t0 >= 0 && t1 < chart3DPoints.size() && t0 != t1) {
-
-					Vector3f interpolatedPoint = interpolate(t0, t1, tq);
-					update3DModel(interpolatedPoint);
-
-				} else if (t0 == t1 && t0 < chart3DPoints.size()) { // if t0 == t1
-					Vector3f exactPoint = chart3DPoints.get(t0);
-					update3DModel(exactPoint);
-				}
-			}
-
-			/**
-			 * Updates the 3D model visualization based on a new 3D point.
-			 * 
-			 * @param point The 3D point that the model needs to reflect.
-			 */
-			private void update3DModel(Vector3f point) {
-				activeImage.voiManager.modify3DMarker(point, point, point);
-			}
-
-			/**
-			 * Interpolates between two 3D points based on a given interpolation parameter.
-			 * 
-			 * @param t0 Index of the first point.
-			 * @param t1 Index of the second point.
-			 * @param tq The interpolation parameter, typically derived from the marker's
-			 *           position.
-			 * @return The interpolated 3D point.
-			 */
-			public Vector3f interpolate(int t0, int t1, float tq) {
-				Vector3f pt0 = chart3DPoints.get(t0);
-				Vector3f pt1 = chart3DPoints.get(t1);
-
-				float m0 = (t1 - tq) / (t1 - t0);
-				float m1 = (tq - t0) / (t1 - t0);
-
-				float x = (float) (m0 * pt0.X + m1 * pt1.X);
-				float y = (float) (m0 * pt0.Y + m1 * pt1.Y);
-				float z = (float) (m0 * pt0.Z + m1 * pt1.Z);
-
-				Vector3f ptq = new Vector3f(x, y, z);
-
-				return ptq;
-			}
-		});
-
-		return chart;
-	}
-
-	/**
 	 * Updates the plot panel by invoking the chart creation and updating the
 	 * display.
 	 * 
@@ -2333,26 +2227,21 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	 * @param values List of values corresponding to each 3D point.
 	 * @param title  Title for the updated plot.
 	 */
-	public void updatePlotPanel(List<Vector3f> points, List<Float> values, String title) {
-		SwingUtilities.invokeLater(() -> {
-			selectionChart = createChart(values, title);
-			chartPanel.setChart(selectionChart);
+	 public void updatePlotPanel(List<Vector3f> points, List<Float> values, String title) {
+	        SwingUtilities.invokeLater(() -> {
+	            chartPanel.updateChart(values, title);
+	            chartPanel.setChart3DPoints(points);
+	        });
+	    }
 
-			chartPanel.setPreferredSize(new Dimension(600, 400));
-			chartPanel.setMouseWheelEnabled(true);
-
-			chartPanel.setDomainZoomable(false);
-			chartPanel.setRangeZoomable(false);
-			chartPanel.setMouseZoomable(false, false);
-			chartPanel.setFillZoomRectangle(false);
-			chartPanel.setZoomAroundAnchor(false);
-
-			chart3DPoints = points;
-
-			chartPanel.revalidate();
-			chartPanel.repaint();
-		});
-	}
+		/**
+		 * Updates the 3D model visualization based on a new 3D point.
+		 * 
+		 * @param point The 3D point that the model needs to reflect.
+		 */
+	    public void update3DModel(Vector3f point) {
+	        activeImage.voiManager.modify3DMarker(point, point, point);
+	    }
 
 	/**
 	 * User-interface initialization. If the UI is integrated all panels are
@@ -2479,59 +2368,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		buttonPanel.add(accurateModeButton);
 		accuratePanel.add(buttonPanel, BorderLayout.NORTH);
 
-		// Create a chart
-		selectionChart = createChart(Arrays.asList(1.0f, 2.0f, 3.0f), "Chart");
-		chartPanel = new ChartPanel(selectionChart);
-
-		// Add a mouse motion listener to handle dragging movements over the chart
-		chartPanel.addMouseMotionListener(new MouseAdapter() {
-			@Override
-			public void mouseDragged(MouseEvent e) {
-				// Get the plot area for accurate coordinate calculation
-				Rectangle2D plotArea = chartPanel.getScreenDataArea();
-				XYPlot plot = selectionChart.getXYPlot();
-				ValueAxis xAxis = plot.getDomainAxis();
-				double x = xAxis.java2DToValue(e.getX(), plotArea, plot.getDomainAxisEdge());
-
-				// Determine the corresponding Y-value by finding the nearest index
-				XYSeriesCollection dataset = (XYSeriesCollection) plot.getDataset();
-				XYSeries series = dataset.getSeries(0);
-
-				int index = findNearestXIndex(series, x);
-				double y = series.getY(index).doubleValue();
-
-				// Update the marker's value and label on the chart
-				ValueMarker marker = (ValueMarker) plot.getDomainMarkers(Layer.FOREGROUND).iterator().next();
-				marker.setValue(x);
-				marker.setLabel(String.format("Value: %.2f", y));
-
-				// Redraw the chart to reflect changes
-				chartPanel.repaint();
-				e.consume();
-			}
-
-			/**
-			 * Finds the index of the closest X value to the given target x.
-			 * 
-			 * @param series The series of data points.
-			 * @param x      The target x value to match.
-			 * @return The index of the closest x value.
-			 */
-			private int findNearestXIndex(XYSeries series, double x) {
-				double minDistance = Double.MAX_VALUE;
-				int nearestIndex = -1;
-
-				for (int i = 0; i < series.getItemCount(); i++) {
-					double distance = Math.abs(series.getX(i).doubleValue() - x);
-					if (distance < minDistance) {
-						minDistance = distance;
-						nearestIndex = i;
-					}
-				}
-				return nearestIndex;
-			}
-		});
-
+		chartPanel = new CustomChartPanel(Arrays.asList(1.0f, 2.0f, 3.0f), "Chart", this);
 		accuratePanel.add(chartPanel, BorderLayout.CENTER);
 
 		tabbedPane = new JTabbedPane();
