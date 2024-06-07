@@ -2227,21 +2227,24 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	 * @param values List of values corresponding to each 3D point.
 	 * @param title  Title for the updated plot.
 	 */
-	 public void updatePlotPanel(List<Vector3f> points, List<Float> values, String title) {
-	        SwingUtilities.invokeLater(() -> {
-	            chartPanel.updateChart(values, title);
-	            chartPanel.setChart3DPoints(points);
-	        });
-	    }
+	public void updatePlotPanel(List<Vector3f> points, List<Float> values, String title) {
+		SwingUtilities.invokeLater(() -> {
+			chartPanel.updateChart(values, title);
+			chartPanel.setChart3DPoints(points);
 
-		/**
-		 * Updates the 3D model visualization based on a new 3D point.
-		 * 
-		 * @param point The 3D point that the model needs to reflect.
-		 */
-	    public void update3DModel(Vector3f point) {
-	        activeImage.voiManager.modify3DMarker(point, point, point);
-	    }
+			chartPanel.revalidate();
+			chartPanel.repaint();
+		});
+	}
+
+	/**
+	 * Updates the 3D model visualization based on a new 3D point.
+	 * 
+	 * @param point The 3D point that the model needs to reflect.
+	 */
+	public void update3DModel(Vector3f point) {
+		activeImage.voiManager.modify3DMarker(point, point, point);
+	}
 
 	/**
 	 * User-interface initialization. If the UI is integrated all panels are

@@ -48,6 +48,7 @@ public class CustomChartPanel extends ChartPanel implements MarkerChangeListener
 		setMouseZoomable(false, false);
 		setFillZoomRectangle(false);
 		setZoomAroundAnchor(false);
+		
 
 		// Add a mouse motion listener to handle dragging movements over the chart
 		addMouseMotionListener(new MouseAdapter() {
@@ -76,6 +77,16 @@ public class CustomChartPanel extends ChartPanel implements MarkerChangeListener
 				e.consume();
 			}
 		});
+	}
+	
+	public void setChart(JFreeChart chart) {
+	    super.setChart(chart);
+	    setMouseWheelEnabled(false);
+		setDomainZoomable(false);
+		setRangeZoomable(false);
+		setMouseZoomable(false, false);
+		setFillZoomRectangle(false);
+		setZoomAroundAnchor(false);
 	}
 
 	/**
