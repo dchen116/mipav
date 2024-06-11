@@ -106,7 +106,6 @@ import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;

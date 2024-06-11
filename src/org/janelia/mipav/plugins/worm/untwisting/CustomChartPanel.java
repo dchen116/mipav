@@ -23,9 +23,13 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 public class CustomChartPanel extends ChartPanel implements MarkerChangeListener {
-	/**
-	 * 
-	 */
+
+
+/**
+ * CustomChartPanel is a custom extension of the ChartPanel class from JFreeChart
+ * used to display and interact with a dynamic XY line chart. It includes custom
+ * behaviors for handling marker changes and mouse drag events.
+ */
 	private static final long serialVersionUID = 1L;
 	private JFreeChart selectionChart;
 	private List<Vector3f> chart3DPoints;
@@ -71,6 +75,9 @@ public class CustomChartPanel extends ChartPanel implements MarkerChangeListener
 				ValueMarker marker = (ValueMarker) plot.getDomainMarkers(Layer.FOREGROUND).iterator().next();
 				marker.setValue(x);
 				marker.setLabel(String.format("Value: %.2f", y));
+			
+				marker.setLabelFont(new Font("Serif", Font.BOLD, 14));
+				marker.setStroke(new BasicStroke(2.0f)); 
 
 				// Redraw the chart to reflect changes
 				repaint();
@@ -189,18 +196,28 @@ public class CustomChartPanel extends ChartPanel implements MarkerChangeListener
 				true, true, false);
 
 		XYPlot plot = chart.getXYPlot();
+		plot.setBackgroundPaint(Color.GRAY);
+		plot.setDomainGridlinePaint(Color.DARK_GRAY);
+		plot.setRangeGridlinePaint(Color.DARK_GRAY); 
+		
 		XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-		renderer.setSeriesPaint(0, Color.BLUE);
+		renderer.setSeriesPaint(0, Color.YELLOW);
 		renderer.setSeriesStroke(0, new BasicStroke(2.0f));
 		plot.setRenderer(renderer);
 
 		ValueMarker marker = new ValueMarker(maxIndex);
-		marker.setPaint(Color.RED);
+		marker.setPaint(Color.CYAN);
 		marker.setLabel("Max Value: " + maxValue);
+
+		marker.setLabelFont(new Font("Serif", Font.BOLD, 14)); 
+		marker.setLabelPaint(Color.WHITE);
+
 		marker.setLabelAnchor(RectangleAnchor.CENTER);
 		marker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
+		marker.setStroke(new BasicStroke(2.0f)); 
 		plot.addDomainMarker(marker);
-
+		
+		
 		marker.addChangeListener(markerListener);
 
 		return chart;
