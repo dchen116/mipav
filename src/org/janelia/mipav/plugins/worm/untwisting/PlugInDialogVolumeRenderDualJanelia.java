@@ -106,6 +106,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -2350,7 +2351,10 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		// Create a panel for toggling between accurate and 3-color modes(not working
 		// currently)
 		accuratePanel = new JPanel(new BorderLayout());
+		accuratePanel.setPreferredSize(new Dimension(400, 400));
+		accuratePanel.setMaximumSize(new Dimension(400, 400));
 		JPanel buttonPanel = new JPanel();
+		
 		// Initialize a toggle button for switching modes
 		accurateModeButton = new JToggleButton("Accurate Mode");
 		accurateModeChanged(true);
@@ -2372,7 +2376,17 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		accuratePanel.add(buttonPanel, BorderLayout.NORTH);
 
 		chartPanel = new CustomChartPanel(Arrays.asList(1.0f, 2.0f, 3.0f), "Chart", this);
-		accuratePanel.add(chartPanel, BorderLayout.CENTER);
+		
+		// Created a fakePanel to split the panel
+		JPanel fakePanel = new JPanel();
+		fakePanel.setPreferredSize(new Dimension(100,500));	
+		JSplitPane chartFakeSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartPanel, fakePanel);
+		chartFakeSplit.setOneTouchExpandable(true);
+		chartFakeSplit.setContinuousLayout(true);
+		chartFakeSplit.setResizeWeight(0.7);
+		chartFakeSplit.setDividerLocation(0.5);
+		
+		accuratePanel.add(chartFakeSplit, BorderLayout.CENTER);
 
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("LUT", null, lutPanel);

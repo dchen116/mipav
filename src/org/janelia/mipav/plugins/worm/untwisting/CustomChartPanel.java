@@ -36,12 +36,12 @@ public class CustomChartPanel extends ChartPanel implements MarkerChangeListener
 		this.selectionChart = createChart(values, title, this);
 		this.parent = parent;
 		this.setChart(selectionChart);
+		setPreferredSize(new Dimension(100,100));
 		initialize();
 
 	}
-
+	
 	private void initialize() {
-		setPreferredSize(new Dimension(600, 300));
 		setMouseWheelEnabled(false);
 		setDomainZoomable(false);
 		setRangeZoomable(false);

@@ -1064,9 +1064,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			}
 		}
 		if (m_kVOIInterface.isAccurateMode()) {
-			notifyPlotListeners(points, plotAccurateValues, "Accurate Values");
+			notifyPlotListeners(points, plotAccurateValues, "Chart");
 		} else {
-			notifyPlotListeners(points, plotValues, "3-Color Values");
+			notifyPlotListeners(points, plotValues, "3-Color Chart");
 		}
 	}
 
