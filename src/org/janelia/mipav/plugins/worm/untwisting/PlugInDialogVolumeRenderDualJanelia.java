@@ -286,7 +286,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	private JSplitPane latticePanel = null;
 	private JPanel latticePanelSingle = null;
 		
-	private CustomChartPanel chartPanel;
+	private SelectionChartPanel chartPanel;
 
 
 	private class IntegratedWormData {
@@ -2374,7 +2374,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		buttonPanel.add(accurateModeButton);
 		accuratePanel.add(buttonPanel, BorderLayout.NORTH);
 
-		chartPanel = new CustomChartPanel(Arrays.asList(1.0f, 2.0f, 3.0f), "Chart", this);
+		chartPanel = new SelectionChartPanel(Arrays.asList(1.0f, 2.0f, 3.0f), "Chart", this);
 		
 		// Created a fakePanel to split the panel
 		JPanel fakePanel = new JPanel();

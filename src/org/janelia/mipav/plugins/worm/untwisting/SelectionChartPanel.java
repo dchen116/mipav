@@ -22,7 +22,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
-public class CustomChartPanel extends ChartPanel implements MarkerChangeListener {
+public class SelectionChartPanel extends ChartPanel implements MarkerChangeListener {
 
 
 /**
@@ -35,7 +35,7 @@ public class CustomChartPanel extends ChartPanel implements MarkerChangeListener
 	private List<Vector3f> chart3DPoints;
 	private PlugInDialogVolumeRenderDualJanelia parent;
 
-	public CustomChartPanel(List<Float> values, String title, PlugInDialogVolumeRenderDualJanelia parent) {
+	public SelectionChartPanel(List<Float> values, String title, PlugInDialogVolumeRenderDualJanelia parent) {
 		super(null);
 		this.selectionChart = createChart(values, title, this);
 		this.parent = parent;
@@ -46,7 +46,7 @@ public class CustomChartPanel extends ChartPanel implements MarkerChangeListener
 	}
 	
 	private void initialize() {
-		setMouseWheelEnabled(false);
+		setMouseWheelEnabled(false); 
 		setDomainZoomable(false);
 		setRangeZoomable(false);
 		setMouseZoomable(false, false);
