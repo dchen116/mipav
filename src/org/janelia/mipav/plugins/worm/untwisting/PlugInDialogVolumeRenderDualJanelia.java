@@ -2371,6 +2371,10 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		chartFakeSplit.setDividerLocation(0.5);
 		
 		accuratePanel.add(chartFakeSplit, BorderLayout.CENTER);
+
+		
+		
+		
 		
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("LUT", null, lutPanel);
