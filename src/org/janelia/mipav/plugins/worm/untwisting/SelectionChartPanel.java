@@ -40,7 +40,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		this.selectionChart = createChart(values, title, this);
 		this.parent = parent;
 		this.setChart(selectionChart);
-		setPreferredSize(new Dimension(100,100));
+		setPreferredSize(new Dimension(100,100));//  plot gets larger vertically and horizontally if remove this line
 		initialize();
 
 	}

@@ -2334,6 +2334,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		// Create a panel for toggling between accurate and 3-color modes(not working
 		// currently)
 		accuratePanel = new JPanel(new BorderLayout());
+		// Panel get larger horizontally if remove the two lines below
 		accuratePanel.setPreferredSize(new Dimension(400, 400));
 		accuratePanel.setMaximumSize(new Dimension(400, 400));
 		JPanel buttonPanel = new JPanel();
@@ -2363,7 +2364,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		
 		// Created a fakePanel to split the panel
 		JPanel fakePanel = new JPanel();
-		fakePanel.setPreferredSize(new Dimension(100,500));	
+		fakePanel.setPreferredSize(new Dimension(100,500));	//  plot gets larger vertically if remove this line
 		JSplitPane chartFakeSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chartPanel, fakePanel);
 		chartFakeSplit.setOneTouchExpandable(true);
 		chartFakeSplit.setContinuousLayout(true);
@@ -2372,10 +2373,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		
 		accuratePanel.add(chartFakeSplit, BorderLayout.CENTER);
 
-		
-		
-		
-		
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
