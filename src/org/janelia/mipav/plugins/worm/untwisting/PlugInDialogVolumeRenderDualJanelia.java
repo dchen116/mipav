@@ -128,22 +128,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.ImageIcon;
 
-import org.janelia.mipav.test.Plot;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.event.MarkerChangeEvent;
-import org.jfree.chart.event.MarkerChangeListener;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.ValueMarker;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.chart.ui.Layer;
-import org.jfree.chart.ui.RectangleAnchor;
-import org.jfree.chart.ui.TextAnchor;
 import org.jocl.Sizeof;
 
 import WildMagic.LibFoundation.Mathematics.Mathf;
@@ -2358,6 +2342,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		accurateModeButton = new JToggleButton("Accurate Mode");
 		accurateModeChanged(true);
 		accurateModeButton.setPreferredSize(new Dimension(200, 50));
+		accurateModeButton.setToolTipText("Press 'M' to toggle Accurate Mode");
 
 		// Add an action response to the button
 		accurateModeButton.addActionListener(new ActionListener() {
@@ -2373,8 +2358,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		// accurate mode panel
 		buttonPanel.add(accurateModeButton);
 		accuratePanel.add(buttonPanel, BorderLayout.NORTH);
-
-		chartPanel = new SelectionChartPanel(Arrays.asList(1.0f, 2.0f, 3.0f), "Chart", this);
+	
+		chartPanel = new SelectionChartPanel(Arrays.asList(0.0f, 0.0f), "Selection Chart", this);
 		
 		// Created a fakePanel to split the panel
 		JPanel fakePanel = new JPanel();
@@ -2386,7 +2371,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		chartFakeSplit.setDividerLocation(0.5);
 		
 		accuratePanel.add(chartFakeSplit, BorderLayout.CENTER);
-
+		
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
