@@ -2360,7 +2360,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		buttonPanel.add(accurateModeButton);
 		accuratePanel.add(buttonPanel, BorderLayout.NORTH);
 	
-		chartPanel = new SelectionChartPanel(Arrays.asList(0.0f, 0.0f), "Selection Chart", this);
+		chartPanel = new SelectionChartPanel(Arrays.asList(0.0f, 0.0f, 0.0f), "Selection Chart", this);
 		
 		// Created a fakePanel to split the panel
 		JPanel fakePanel = new JPanel();

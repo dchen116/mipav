@@ -64,21 +64,32 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 				XYPlot plot = selectionChart.getXYPlot();
 				ValueAxis xAxis = plot.getDomainAxis();
 				double x = xAxis.java2DToValue(e.getX(), plotArea, plot.getDomainAxisEdge());
-
+				ValueAxis yAxis = plot.getRangeAxis();
+				double yClick = yAxis.java2DToValue(e.getY(), plotArea, plot.getRangeAxisEdge());
+				
 				// Determine the corresponding Y-value by finding the nearest index
 				XYSeriesCollection dataset = (XYSeriesCollection) plot.getDataset();
 				XYSeries series = dataset.getSeries(0);
+				XYSeries slopeSeries = dataset.getSeries(1);
 
 				int index = findNearestXIndex(series, x);
 				double y = series.getY(index).doubleValue();
+				double yDer = slopeSeries.getY(index).doubleValue(); // yDer is derivative at x
 
 				// Update the marker's value and label on the chart
 				ValueMarker marker = (ValueMarker) plot.getDomainMarkers(Layer.FOREGROUND).iterator().next();
 				marker.setValue(x);
-				marker.setLabel(String.format("Value: %.2f", y));
-			
+				marker.setLabel(String.format("Value: %.2f, Derivative: %.2f", y, yDer));
 				marker.setLabelFont(new Font("Serif", Font.BOLD, 14));
 				marker.setStroke(new BasicStroke(2.0f)); 
+				
+				// Update the thresholdMarker's value and label on the chart
+				ValueMarker thresholdMarker = (ValueMarker) plot.getRangeMarkers(Layer.FOREGROUND).iterator().next();
+				thresholdMarker.setValue(yClick);
+				thresholdMarker.setLabel(String.format("Threshold Value: %.2f", yClick));
+				thresholdMarker.setLabelFont(new Font("Serif", Font.BOLD, 14));
+				thresholdMarker.setStroke(new BasicStroke(2.0f)); 
+				
 
 				// Redraw the chart to reflect changes
 				repaint();
@@ -193,12 +204,13 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		dataset.addSeries(series);
 		
 		// Calculate slopes and add to the series
-		List<Float> slopes = calculateSlopes(values);
+		List<Float> slopes = calculateSecantSlopes(values);
 		
 	    XYSeries slopeSeries = new XYSeries("Slopes");
-	    for (int i = 1; i < values.size(); i++) {
-	        double slopeIndex = i - 0.5;  // offset half an interval, 0.5, from the original values along the x-axis.
-	        slopeSeries.add(slopeIndex, slopes.get(i-1));
+	    for (int i = 2; i < values.size(); i++) {
+	      //  double slopeIndex = i - 0.5;  // offset half an interval, 0.5, from the original values along the x-axis.
+	        double slopeIndex = i -1;
+	        slopeSeries.add(slopeIndex, slopes.get(i-2));
 	    }
 	    dataset.addSeries(slopeSeries);
 
@@ -216,18 +228,28 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		renderer.setSeriesStroke(0, new BasicStroke(2.0f));
 		plot.setRenderer(renderer);
 
+		// Added vertical domianMarker
 		ValueMarker marker = new ValueMarker(maxIndex);
 		marker.setPaint(Color.CYAN);
 		marker.setLabel("Max Value: " + maxValue);
-
 		marker.setLabelFont(new Font("Serif", Font.BOLD, 14)); 
 		marker.setLabelPaint(Color.WHITE);
-
 		marker.setLabelAnchor(RectangleAnchor.CENTER);
 		marker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
 		marker.setStroke(new BasicStroke(2.0f)); 
 		plot.addDomainMarker(marker);
 		
+		// Added horizontal theesholdMarker
+		float thresholdValue = maxValue / 2;
+		ValueMarker thresholdMarker = new ValueMarker(thresholdValue);
+		thresholdMarker.setPaint(Color.CYAN);
+		thresholdMarker.setLabel("Threshold Value: " + thresholdValue);
+		thresholdMarker.setLabelFont(new Font("Serif", Font.BOLD, 14)); 
+		thresholdMarker.setLabelPaint(Color.WHITE);
+		thresholdMarker.setLabelAnchor(RectangleAnchor.CENTER);
+		thresholdMarker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
+		thresholdMarker.setStroke(new BasicStroke(2.0f)); 
+		plot.addRangeMarker(thresholdMarker);
 		
 		marker.addChangeListener(markerListener);
 
@@ -240,7 +262,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	 * @param values List of values for which slopes are to be calculated.
 	 * @return List of calculated slopes.
 	 */
-	private static List<Float> calculateSlopes(List<Float> values) {
+	private static List<Float> calculateAdjacentSlopes(List<Float> values) {
 	    List<Float> slopes = new ArrayList<>();
 	    for (int i = 1; i < values.size(); i++) {
 	        float slope = (values.get(i) - values.get(i - 1)) / 1.0f; 
@@ -248,6 +270,16 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	    }
 	    return slopes;
 	}
+	
+	private static List<Float> calculateSecantSlopes(List<Float> values) {
+	    List<Float> slopes = new ArrayList<>();
+	    for (int i = 2; i < values.size(); i++) {
+	        float slope = (values.get(i) - values.get(i - 2)) / 1.0f; 
+	        slopes.add(slope);
+	    }
+	    return slopes;
+	}
+	
 
 	/**
 	 * Sets the 3D points corresponding to the data points in the plot.
