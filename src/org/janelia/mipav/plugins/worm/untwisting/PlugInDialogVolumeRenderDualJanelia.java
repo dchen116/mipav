@@ -231,8 +231,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	private JTabbedPane opacityTab;
 	private JPanel clipPanel;
 	private JPanel accuratePanel;
-	// private JButton accurateModeButton;
 	private JToggleButton accurateModeButton;
+	private JButton nextPeakButton;
 
 	private PlugInDialogVolumeRenderDualJanelia parent;
 	private JTextField rangeFusionText;
@@ -2371,6 +2371,11 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		chartFakeSplit.setResizeWeight(0.7);
 		chartFakeSplit.setDividerLocation(0.5);
 		
+		nextPeakButton = new JButton("Next Peak");
+		nextPeakButton.setPreferredSize(new Dimension(200, 50));
+		nextPeakButton.setToolTipText("Press 'N' move to Next Peak");
+		fakePanel.add(nextPeakButton);
+
 		accuratePanel.add(chartFakeSplit, BorderLayout.CENTER);
 
 		tabbedPane = new JTabbedPane();

@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SelectionChartPanel extends ChartPanel implements MarkerChangeListener {
@@ -190,6 +191,16 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 
 		XYSeriesCollection dataset = new XYSeriesCollection();
 		dataset.addSeries(series);
+		
+		// Calculate slopes and add to the series
+		List<Float> slopes = calculateSlopes(values);
+		
+	    XYSeries slopeSeries = new XYSeries("Slopes");
+	    for (int i = 1; i < values.size(); i++) {
+	        double slopeIndex = i - 0.5;  // offset half an interval, 0.5, from the original values along the x-axis.
+	        slopeSeries.add(slopeIndex, slopes.get(i-1));
+	    }
+	    dataset.addSeries(slopeSeries);
 
 		// Create the chart
 		JFreeChart chart = ChartFactory.createXYLineChart(title, "Index", "Value", dataset, PlotOrientation.VERTICAL,
@@ -222,7 +233,27 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 
 		return chart;
 	}
+	
+	/**
+	 * Calculates the slopes between points in the list
+	 *
+	 * @param values List of values for which slopes are to be calculated.
+	 * @return List of calculated slopes.
+	 */
+	private static List<Float> calculateSlopes(List<Float> values) {
+	    List<Float> slopes = new ArrayList<>();
+	    for (int i = 1; i < values.size(); i++) {
+	        float slope = (values.get(i) - values.get(i - 1)) / 1.0f; 
+	        slopes.add(slope);
+	    }
+	    return slopes;
+	}
 
+	/**
+	 * Sets the 3D points corresponding to the data points in the plot.
+	 *
+	 * @param points List of 3D points to be used in corresponding 3D model updates.
+	 */
 	public void setChart3DPoints(List<Vector3f> points) {
 		this.chart3DPoints = points;
 	}
