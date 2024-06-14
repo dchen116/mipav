@@ -74,12 +74,12 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 
 				int index = findNearestXIndex(series, x);
 				double y = series.getY(index).doubleValue();
-				double yDer = slopeSeries.getY(index).doubleValue(); // yDer is derivative at x
+				double slope = slopeSeries.getY(index).doubleValue(); // slope is derivative at x
 
 				// Update the marker's value and label on the chart
 				ValueMarker marker = (ValueMarker) plot.getDomainMarkers(Layer.FOREGROUND).iterator().next();
 				marker.setValue(x);
-				marker.setLabel(String.format("Value: %.2f, Derivative: %.2f", y, yDer));
+				marker.setLabel(String.format("Value: %.2f, Derivative: %.2f", y, slope));
 				marker.setLabelFont(new Font("Serif", Font.BOLD, 14));
 				marker.setStroke(new BasicStroke(2.0f)); 
 				
