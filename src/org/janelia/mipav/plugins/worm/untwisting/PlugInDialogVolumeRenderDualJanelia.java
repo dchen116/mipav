@@ -2374,6 +2374,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		nextPeakButton = new JButton("Next Peak");
 		nextPeakButton.setPreferredSize(new Dimension(200, 50));
 		nextPeakButton.setToolTipText("Press 'N' move to Next Peak");
+		nextPeakButton.addActionListener(chartPanel);
+		
 		fakePanel.add(nextPeakButton);
 
 		accuratePanel.add(chartFakeSplit, BorderLayout.CENTER);
@@ -2422,6 +2424,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 
 		segmentSeamCells.setSelected(true);
 	}
+	
+	
 
 	/**
 	 * Sets up the GPU volume display panel, with the 'back' and 'next' buttons for

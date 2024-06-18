@@ -17,11 +17,14 @@ import org.jfree.data.xy.XYSeriesCollection;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SelectionChartPanel extends ChartPanel implements MarkerChangeListener {
 
@@ -288,5 +291,81 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	 */
 	public void setChart3DPoints(List<Vector3f> points) {
 		this.chart3DPoints = points;
+	}
+
+	/**
+	 * Method to find the next peak. It cycles through values starting from a given
+	 * index to identify a peak where the slope changes sign.
+	 * 
+	 * @param index     Starting index for the search, ensuring it doesn't start
+	 *                  before the beginning of the list.
+	 * @param values    List of Y-values from the dataset.
+	 * @param threshold Minimum Y-value to consider for a peak.
+	 * @return The index of the next peak if found; otherwise, returns -1.
+	 */
+	public float nextPeak(int index, List<Float> values, double threshold) {
+		// Calculate slopes between each pair of points using a secant method.
+		List<Float> slopes = calculateSecantSlopes(values);
+		// Ensure the starting index is not less than zero
+		index = Math.max(index, 0);
+
+		// Loop through slopes to find where the sign changes.
+		for (int j = 0; j < slopes.size() - 1; j++) {
+			int i = (j + index) % (slopes.size() - 1);
+			float currentSlope = slopes.get(i);
+			float nextSlope = slopes.get(i + 1);
+			float y = values.get(i + 1);
+
+			// Check if current point is a peak by comparing it against the threshold and
+			// slope changes.
+			if (y > threshold && currentSlope > 0 && nextSlope < 0) {
+				// Calculate interpolated index where the slope would cross zero.
+				float indexX = ((-currentSlope) / (nextSlope - currentSlope)) + i;
+				System.out.println("here is the indexX:" + indexX);
+				System.out.println("this is i:" + i);
+				return indexX + 1;
+
+			}
+		}
+		System.out.println("No peak found.");
+		return -1;
+	}
+
+	/***
+	 * Handles action events, specifically looking to handle "Next Peak" actions.
+	 * 
+	 * @param e The ActionEvent object containing details about the event.
+	 */
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (e.getActionCommand() == "Next Peak") {
+			XYPlot plot = selectionChart.getXYPlot();
+			// Retrieve data and convert it into a List<Float> for processing
+			XYSeriesCollection dataset = (XYSeriesCollection) plot.getDataset();
+			XYSeries series = dataset.getSeries(0);
+			double[][] data = series.toArray();
+			List<Float> values = Arrays.stream(data[1]).mapToObj(d -> Float.valueOf((float) d))
+					.collect(Collectors.toList());
+
+			// Access current marker position and determine the next index to check for a
+			// peak
+			ValueMarker marker = (ValueMarker) plot.getDomainMarkers(Layer.FOREGROUND).iterator().next();
+			int index = (int) Math.ceil(marker.getValue()) + 1;
+
+			// Retrieve threshold value from the threshold marker
+			ValueMarker thresholdMarker = (ValueMarker) plot.getRangeMarkers(Layer.FOREGROUND).iterator().next();
+			double threshold = thresholdMarker.getValue();
+
+			// Call the nextPeak method to find the next peak and update the chart
+			float peakIndex = nextPeak(index, values, threshold);
+			if (peakIndex != -1) {
+				System.out.println("Next peak is at index: " + peakIndex);
+				marker.setValue(peakIndex);
+				float y = values.get(Math.round(peakIndex));
+				marker.setLabel(String.format("Value: %.2f, Derivative: %.2f", y, 0.0f));
+			}
+		} else {
+			super.actionPerformed(e);
+		}
 	}
 }
