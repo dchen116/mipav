@@ -1278,7 +1278,9 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			if (which != -1) {
 				updateImages(activeImage.colormap, activeImage.hyperstack[which].GetLUT(), which);
 //				System.err.println("updateImages " + which);
-				activeImage.hyperstack[which].UpdateImages(activeImage.hyperstack[which].getLUT());
+				ModelStorageBase lut = activeImage.hyperstack[which].getLUT();
+				activeImage.hyperstack[which].UpdateImages(lut);
+				chartPanel.setLUT(lut);
 //				if ( activeImage.previewHS != null ) {
 //					activeImage.previewHS[which].UpdateImages(activeImage.hyperstack[which].getLUT());
 //				}
@@ -3269,6 +3271,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 //		}
 		for (int i = 0; i < numImages; i++) {
 			integratedData.hyperstack[i].GetImage().addImageDisplayListener(this);
+			integratedData.hyperstack[i].GetImage().addImageDisplayListener(chartPanel);
 		}
 	}
 

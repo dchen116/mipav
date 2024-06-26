@@ -15,6 +15,9 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.ViewImageUpdateInterface;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -26,7 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SelectionChartPanel extends ChartPanel implements MarkerChangeListener {
+public class SelectionChartPanel extends ChartPanel implements MarkerChangeListener, ViewImageUpdateInterface {
 
 
 /**
@@ -38,6 +41,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	private JFreeChart selectionChart;
 	private List<Vector3f> chart3DPoints;
 	private PlugInDialogVolumeRenderDualJanelia parent;
+	private Color currentColor = Color.YELLOW;
 
 	public SelectionChartPanel(List<Float> values, String title, PlugInDialogVolumeRenderDualJanelia parent) {
 		super(null);
@@ -74,8 +78,12 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 				XYSeriesCollection dataset = (XYSeriesCollection) plot.getDataset();
 				XYSeries series = dataset.getSeries(0);
 				XYSeries slopeSeries = dataset.getSeries(1);
-
+				
+				if(series.getItemCount() == 0) return;
 				int index = findNearestXIndex(series, x);
+			    if(index >= 0 && index < series.getItemCount()) { // Ensure index is valid
+
+				//int index = findNearestXIndex(series, x);
 				double y = series.getY(index).doubleValue();
 				double slope = slopeSeries.getY(index).doubleValue(); // slope is derivative at x
 
@@ -93,10 +101,12 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 				thresholdMarker.setLabelFont(new Font("Serif", Font.BOLD, 14));
 				thresholdMarker.setStroke(new BasicStroke(2.0f)); 
 				
+				refreshPlot();
 
 				// Redraw the chart to reflect changes
 				repaint();
 				e.consume();
+			}
 			}
 		});
 	}
@@ -135,6 +145,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	public void updateChart(List<Float> values, String title) {
 		this.selectionChart = createChart(values, title, this);
 		setChart(this.selectionChart);
+		refreshPlot();
 		revalidate();
 		repaint();
 	}
@@ -210,9 +221,8 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		List<Float> slopes = calculateSecantSlopes(values);
 		
 	    XYSeries slopeSeries = new XYSeries("Slopes");
-	    for (int i = 2; i < values.size(); i++) {
-	      //  double slopeIndex = i - 0.5;  // offset half an interval, 0.5, from the original values along the x-axis.
-	        double slopeIndex = i -1;
+	    for (int i = 2; i < values.size(); i++) { 
+	        double slopeIndex = i -1; // offset half an interval, 0.5, from the original values along the x-axis.
 	        slopeSeries.add(slopeIndex, slopes.get(i-2));
 	    }
 	    dataset.addSeries(slopeSeries);
@@ -368,4 +378,61 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 			super.actionPerformed(e);
 		}
 	}
+
+    private void refreshPlot() {
+        updateChartColor(currentColor);
+    }
+
+	@Override
+	public void setSlice(int slice) {
+		
+	}
+
+	@Override
+	public void setTimeSlice(int tSlice) {
+		
+	}
+
+	@Override
+	public boolean updateImageExtents() {
+		return false;
+	}
+
+	@Override
+	public boolean updateImages() {
+		return false;
+	}
+
+	@Override
+	public boolean updateImages(boolean flag) {
+		return false;
+	}
+
+	@Override
+	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {			
+		return false;
+	}
+
+	public void setLUT(ModelStorageBase lut) {
+		if(lut instanceof ModelLUT) {
+			ModelLUT lut2 = (ModelLUT) lut;
+			int[] extents = lut2.getExtents();
+			System.out.println(extents);
+			Color c = lut2.getColor(extents[1]-1);
+			System.out.println(c);
+			updateChartColor(c);
+		}
+	}
+
+    private void updateChartColor(Color color) {
+    	System.out.println("Updating chart color to: " + color.toString());
+        currentColor = color; 
+        XYPlot plot = selectionChart.getXYPlot();
+        XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, color);
+        plot.setRenderer(renderer);
+        repaint();
+    }
+
+
 }
