@@ -199,7 +199,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	 * @param title  Title of the chart.
 	 * @return A JFreeChart object fully initialized.
 	 */
-	private static JFreeChart createChart(List<Float> values, String title, MarkerChangeListener markerListener) {
+	private JFreeChart createChart(List<Float> values, String title, MarkerChangeListener markerListener) {
 		XYSeries series = new XYSeries("Data");
 		float maxValue = -Float.MAX_VALUE;
 		int maxIndex = -1;
@@ -232,6 +232,10 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 				true, true, false);
 
 		XYPlot plot = chart.getXYPlot();
+		
+		selectionChart = chart;
+		setupRendererWithGradient(plot);
+		
 		plot.setBackgroundPaint(Color.GRAY);
 		plot.setDomainGridlinePaint(Color.DARK_GRAY);
 		plot.setRangeGridlinePaint(Color.DARK_GRAY); 
@@ -424,15 +428,31 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		}
 	}
 
-    private void updateChartColor(Color color) {
-    	System.out.println("Updating chart color to: " + color.toString());
-        currentColor = color; 
-        XYPlot plot = selectionChart.getXYPlot();
-        XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, color);
-        plot.setRenderer(renderer);
-        repaint();
-    }
+	private void updateChartColor(Color color) {
+		currentColor = color;
+	    XYPlot plot = selectionChart.getXYPlot();
+	    GradientPaint gradientPaint = createGradientPaint(color);
+	    XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+	    renderer.setSeriesPaint(0, gradientPaint);
+	    plot.setRenderer(renderer);
+	    repaint();
+	}
+  
+	private GradientPaint createGradientPaint(Color color) {
+	    float height = (float) getBounds().getHeight();
+	    return new GradientPaint(0, height, Color.BLACK, 0, 0, color, true);
+	}
+
+	private void setupRendererWithGradient(XYPlot plot) {
+	    GradientPaint gradientPaint = createGradientPaint(currentColor);
+	    if (gradientPaint != null) {
+	        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+	        renderer.setSeriesPaint(0, gradientPaint);
+	        renderer.setSeriesStroke(0, new BasicStroke(2.0f));
+	        plot.setRenderer(renderer);
+	    }
+	}
+
 
 
 }
