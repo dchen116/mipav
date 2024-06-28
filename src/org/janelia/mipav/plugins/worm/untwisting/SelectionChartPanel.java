@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 
 public class SelectionChartPanel extends ChartPanel implements MarkerChangeListener, ViewImageUpdateInterface {
 
-
 /**
  * CustomChartPanel is a custom extension of the ChartPanel class from JFreeChart
  * used to display and interact with a dynamic XY line chart. It includes custom
@@ -43,6 +42,9 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	private PlugInDialogVolumeRenderDualJanelia parent;
 	private Color currentColor = Color.YELLOW;
 
+	/**
+     * Constructor to initialize the chart panel with data.
+     */
 	public SelectionChartPanel(List<Float> values, String title, PlugInDialogVolumeRenderDualJanelia parent) {
 		super(null);
 		this.selectionChart = createChart(values, title, this);
@@ -53,6 +55,9 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 
 	}
 	
+	/**
+     * Initializes chart panel settings.
+     */
 	private void initialize() {
 		setMouseWheelEnabled(false); 
 		setDomainZoomable(false);
@@ -111,6 +116,9 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		});
 	}
 	
+	/**
+     * Overrides the method to set a chart and configure its settings.
+     */
 	public void setChart(JFreeChart chart) {
 	    super.setChart(chart);
 	    setMouseWheelEnabled(false);
@@ -142,6 +150,9 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		return nearestIndex;
 	}
 
+	/**
+     * Updates the chart with new data and title.
+     */
 	public void updateChart(List<Float> values, String title) {
 		this.selectionChart = createChart(values, title, this);
 		setChart(this.selectionChart);
@@ -279,15 +290,6 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	 * @param values List of values for which slopes are to be calculated.
 	 * @return List of calculated slopes.
 	 */
-	private static List<Float> calculateAdjacentSlopes(List<Float> values) {
-	    List<Float> slopes = new ArrayList<>();
-	    for (int i = 1; i < values.size(); i++) {
-	        float slope = (values.get(i) - values.get(i - 1)) / 1.0f; 
-	        slopes.add(slope);
-	    }
-	    return slopes;
-	}
-	
 	private static List<Float> calculateSecantSlopes(List<Float> values) {
 	    List<Float> slopes = new ArrayList<>();
 	    for (int i = 2; i < values.size(); i++) {
@@ -383,6 +385,9 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		}
 	}
 
+	 /**
+     * Refreshes the plot after updates.
+     */
     private void refreshPlot() {
         updateChartColor(currentColor);
     }
@@ -417,17 +422,21 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		return false;
 	}
 
+	 /**
+     * Sets the LUT for color updates based on selected LUT.
+     */
 	public void setLUT(ModelStorageBase lut) {
 		if(lut instanceof ModelLUT) {
 			ModelLUT lut2 = (ModelLUT) lut;
-			int[] extents = lut2.getExtents();
-			System.out.println(extents);
-			Color c = lut2.getColor(extents[1]-1);
-			System.out.println(c);
+			int[] extents = lut2.getExtents();// Get the dimensions of the LUT
+			Color c = lut2.getColor(extents[1]-1);// Fetch the color at the last index of the LUT
 			updateChartColor(c);
 		}
 	}
 
+	/**
+     * Updates the chart color and applies a gradient based on the selected color channel.
+     */
 	private void updateChartColor(Color color) {
 		currentColor = color;
 	    XYPlot plot = selectionChart.getXYPlot();
@@ -438,11 +447,17 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	    repaint();
 	}
   
+	/**
+     * Creates a gradient paint from black to the specified color.
+     */
 	private GradientPaint createGradientPaint(Color color) {
-	    float height = (float) getBounds().getHeight();
-	    return new GradientPaint(0, height, Color.BLACK, 0, 0, color, true);
+	    float height = (float) getBounds().getHeight();// Determine the height of the chart for the gradient scale
+	    return new GradientPaint(0, height, Color.BLACK, 0, 0, color, true);// Create a gradient that transitions vertically
 	}
 
+	/**
+     * Sets up the renderer with a gradient paint.
+     */
 	private void setupRendererWithGradient(XYPlot plot) {
 	    GradientPaint gradientPaint = createGradientPaint(currentColor);
 	    if (gradientPaint != null) {
@@ -452,7 +467,4 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	        plot.setRenderer(renderer);
 	    }
 	}
-
-
-
 }
