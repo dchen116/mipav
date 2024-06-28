@@ -2362,6 +2362,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		buttonPanel.add(accurateModeButton);
 		accuratePanel.add(buttonPanel, BorderLayout.NORTH);
 	
+		// Create a new SelectionChartPanel to display and interact with a dynamic XY line chart
 		chartPanel = new SelectionChartPanel(Arrays.asList(0.0f, 0.0f, 0.0f), "Selection Chart", this);
 		
 		// Created a fakePanel to split the panel

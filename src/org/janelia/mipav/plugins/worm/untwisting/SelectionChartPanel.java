@@ -424,6 +424,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 
 	 /**
      * Sets the LUT for color updates based on selected LUT.
+     * @param lut the LUT data structure from which to extract the color information
      */
 	public void setLUT(ModelStorageBase lut) {
 		if(lut instanceof ModelLUT) {
@@ -436,6 +437,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 
 	/**
      * Updates the chart color and applies a gradient based on the selected color channel.
+     * @param color the color to which the chart elements will be updated.
      */
 	private void updateChartColor(Color color) {
 		currentColor = color;
@@ -449,6 +451,8 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
   
 	/**
      * Creates a gradient paint from black to the specified color.
+     * @param color the target end color of the gradient.
+     * @return GradientPaint object that specifies the gradient properties.
      */
 	private GradientPaint createGradientPaint(Color color) {
 	    float height = (float) getBounds().getHeight();// Determine the height of the chart for the gradient scale
@@ -457,6 +461,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 
 	/**
      * Sets up the renderer with a gradient paint.
+     * @param plot the plot to which the renderer will be set.
      */
 	private void setupRendererWithGradient(XYPlot plot) {
 	    GradientPaint gradientPaint = createGradientPaint(currentColor);
