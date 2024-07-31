@@ -25,6 +25,7 @@ public interface PlotDataUpdateListener {
 	 * @param title  The title of the plot, describing the data or context of what
 	 *               is being displayed
 	 */
-	void updatePlotPanel(List<Vector3f> points, List<Float> values, String title);
+	//void updatePlotPanel(List<Vector3f> points, List<Float> values, String title);
+	void updatePlotPanel(List<Vector3f> points, List<List<Float>> values, List<String> titles);
 
 }

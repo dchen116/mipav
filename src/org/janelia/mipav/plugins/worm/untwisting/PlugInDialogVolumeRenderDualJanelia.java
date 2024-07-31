@@ -105,6 +105,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -1013,7 +1014,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		updateHistoLUTPanels(activeImage);
 		updateClipPanel(activeImage, activeRenderer, true);
 		updateSurfacePanels();
-		updateSelectionPanel();
+		updateSelectionPanel(activeImage);
 
 		if (activeImage.currentTab != -1) {
 			tabbedPane.setSelectedIndex(activeImage.currentTab);
@@ -1081,7 +1082,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			updateSurfacePanels();
 			updateClipPanel(activeImage, activeRenderer, true);
 			updateHistoLUTPanels(activeImage);
-			updateSelectionPanel();
+			updateSelectionPanel(activeImage);
 
 			if (editMode == EditLattice) {
 				leftImage.voiManager.editLattice();
@@ -1280,7 +1281,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 //				System.err.println("updateImages " + which);
 				ModelStorageBase lut = activeImage.hyperstack[which].getLUT();
 				activeImage.hyperstack[which].UpdateImages(lut);
-				chartPanel.setLUT(lut);
+				chartPanel.setLUT(lut, which);
 //				if ( activeImage.previewHS != null ) {
 //					activeImage.previewHS[which].UpdateImages(activeImage.hyperstack[which].getLUT());
 //				}
@@ -2222,6 +2223,21 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			chartPanel.repaint();
 		});
 	}
+	
+	@Override
+	public void updatePlotPanel(List<Vector3f> points, List<List<Float>> values, List<String> titles) {
+	    SwingUtilities.invokeLater(() -> {
+	    	chartPanel.updateCharts(values, titles.get(0));
+	        chartPanel.setChart3DPoints(points);
+	        chartPanel.revalidate();
+	        chartPanel.repaint();
+	    });
+	}
+	
+
+
+	
+	
 
 	/**
 	 * Updates the 3D model visualization based on a new 3D point.
@@ -3164,9 +3180,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		int numImages = integratedData.hyperstack.length;
 		String[] subDir = new String[numImages];
 		for (int i = 0; i < numImages; i++) {
-			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
-			int len = baseFileDir[i].length();
-			subDir[i] = baseFileDir[i].substring(index, len);
+			subDir[i] = getBaseFileSubDir(i);
 			JCheckBox box = new JCheckBox(subDir[i], true);
 			box.setActionCommand(subDir[i]);
 			box.addActionListener(this);
@@ -3178,10 +3192,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 
 		int numImages = activeImage.hyperstack.length;
 		for (int i = 0; i < numImages; i++) {
-			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
-			int len = baseFileDir[i].length();
-			String subDir = baseFileDir[i].substring(index, len);
-			if (subDir.equals(cmd)) {
+			if (getBaseFileSubDir(i).equals(cmd)) {
 				return i;
 			}
 		}
@@ -3275,6 +3286,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			integratedData.hyperstack[i].GetImage().addImageDisplayListener(chartPanel);
 		}
 	}
+	
+	private String getBaseFileSubDir(int i) {
+		System.out.println("getBaseFileSubDir " + i);
+		int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
+		int len = baseFileDir[i].length();
+		return baseFileDir[i].substring(index, len);
+	}
 
 	private void updateHistoLUTPanels(IntegratedWormData integratedData) {
 //		 System.err.println("updateHistoLUTPanels");
@@ -3285,9 +3303,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		if (!integratedData.colorMapInit) {
 			integratedData.colorMapInit = true;
 			for (int i = 0; i < numImages; i++) {
-				int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
-				int len = baseFileDir[i].length();
-				subDir[i] = baseFileDir[i].substring(index, len);
+				subDir[i] = getBaseFileSubDir(i);
 				if (subDir[i].equals("405")) {
 					// set transfer function:
 					ModelLUT lut = integratedData.hyperstack[i].GetLUT();
@@ -3337,9 +3353,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 
 		opacityTab.removeAll();
 		for (int i = 0; i < numImages; i++) {
-			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
-			int len = baseFileDir[i].length();
-			subDir[i] = baseFileDir[i].substring(index, len);
+			subDir[i] = getBaseFileSubDir(i);
 
 			opacityTab.addTab(subDir[i] + File.separator + integratedData.hyperstack[i].GetImage().getImageName(), null,
 					integratedData.volOpacityPanel[i].getMainPanel());
@@ -3422,8 +3436,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	 * Updates the selection panel method ensures that the user interface components
 	 * related to VOI management reflect the current operational mode.
 	 */
-	private void updateSelectionPanel() {
-		VOILatticeManagerInterface voiManager = activeImage.voiManager;
+	private void updateSelectionPanel(IntegratedWormData integratedData) {
+		String[] subDirs = IntStream
+			.range(0, integratedData.hyperstack.length)
+			.mapToObj(i -> getBaseFileSubDir(i))
+			.toArray(String[]::new);
+		chartPanel.setChannelNames(subDirs);
+		VOILatticeManagerInterface voiManager = integratedData.voiManager;
 		voiManager.setAccurateMode(voiManager.isAccurateMode());
 	}
 

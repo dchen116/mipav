@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class SelectionChartPanel extends ChartPanel implements MarkerChangeListener, ViewImageUpdateInterface {
 
@@ -40,7 +41,8 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	private JFreeChart selectionChart;
 	private List<Vector3f> chart3DPoints;
 	private PlugInDialogVolumeRenderDualJanelia parent;
-	private Color currentColor = Color.YELLOW;
+	private Color[] currentColors = { Color.YELLOW };
+	private String[] channelNames;
 
 	/**
      * Constructor to initialize the chart panel with data.
@@ -66,7 +68,6 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		setFillZoomRectangle(false);
 		setZoomAroundAnchor(false);
 		
-
 		// Add a mouse motion listener to handle dragging movements over the chart
 		addMouseMotionListener(new MouseAdapter() {
 			@Override
@@ -160,6 +161,18 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		revalidate();
 		repaint();
 	}
+	
+	/**
+     * Updates the charts with new data and title.
+     */
+	public void updateCharts(List<List<Float>> values, String title) {
+		this.selectionChart = createCharts(values, title, this);
+		setChart(this.selectionChart);
+		refreshPlot();
+		revalidate();
+		repaint();
+	}
+
 
 	// Set up a marker change listener to handle marker position changes
 	@Override
@@ -245,7 +258,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		XYPlot plot = chart.getXYPlot();
 		
 		selectionChart = chart;
-		setupRendererWithGradient(plot);
+		setupRendererWithGradient(plot, 0);
 		
 		plot.setBackgroundPaint(Color.GRAY);
 		plot.setDomainGridlinePaint(Color.DARK_GRAY);
@@ -266,6 +279,98 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 		marker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
 		marker.setStroke(new BasicStroke(2.0f)); 
 		plot.addDomainMarker(marker);
+		
+		// Added horizontal theesholdMarker
+		float thresholdValue = maxValue / 2;
+		ValueMarker thresholdMarker = new ValueMarker(thresholdValue);
+		thresholdMarker.setPaint(Color.CYAN);
+		thresholdMarker.setLabel("Threshold Value: " + thresholdValue);
+		thresholdMarker.setLabelFont(new Font("Serif", Font.BOLD, 14)); 
+		thresholdMarker.setLabelPaint(Color.WHITE);
+		thresholdMarker.setLabelAnchor(RectangleAnchor.CENTER);
+		thresholdMarker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
+		thresholdMarker.setStroke(new BasicStroke(2.0f)); 
+		plot.addRangeMarker(thresholdMarker);
+		
+		marker.addChangeListener(markerListener);
+
+		return chart;
+	}
+	
+	/**
+	 * Creates a chart using a list of values and assigns it a title. Each value in
+	 * the list is plotted against its index.
+	 * 
+	 * @param values List of floating-point values for the Y-axis.
+	 * @param title  Title of the chart.
+	 * @return A JFreeChart object fully initialized.
+	 */
+	private JFreeChart createCharts(List<List<Float>> listOfValues, String title, MarkerChangeListener markerListener) {
+		float maxValue = -Float.MAX_VALUE;
+		int maxIndex = -1;
+		
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		
+		for(int j = 0; j < listOfValues.size(); j++) {
+			
+			List<Float> values = listOfValues.get(j);
+		
+			XYSeries series = new XYSeries("Data " + channelNames[j]);
+			
+			// Populate the series with values and track the maximum value and its index
+			for (int i = 0; i < values.size(); i++) {
+				float value = values.get(i);
+				series.add(i, value);
+				if (value > maxValue) {
+					maxValue = value;
+					maxIndex = i;
+				}
+			}
+			
+	
+			dataset.addSeries(series);
+			
+			// Calculate slopes and add to the series
+			List<Float> slopes = calculateSecantSlopes(values);
+			
+		    XYSeries slopeSeries = new XYSeries("Slopes " + channelNames[j]);
+		    for (int i = 2; i < values.size(); i++) { 
+		        double slopeIndex = i -1; // offset half an interval, 0.5, from the original values along the x-axis.
+		        slopeSeries.add(slopeIndex, slopes.get(i-2));
+		    }
+		    dataset.addSeries(slopeSeries);
+	    
+		}
+
+		// Create the chart
+		JFreeChart chart = ChartFactory.createXYLineChart(title, "Index", "Value", dataset, PlotOrientation.VERTICAL,
+				true, true, false);
+
+		XYPlot plot = chart.getXYPlot();
+		
+		selectionChart = chart;
+		IntStream.range(0, listOfValues.size())
+			.forEach(i -> setupRendererWithGradient(plot, i));
+		
+		plot.setBackgroundPaint(Color.GRAY);
+		plot.setDomainGridlinePaint(Color.DARK_GRAY);
+		plot.setRangeGridlinePaint(Color.DARK_GRAY); 
+		
+		XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+		renderer.setSeriesPaint(0, Color.YELLOW);
+		renderer.setSeriesStroke(0, new BasicStroke(2.0f));
+		plot.setRenderer(renderer);
+
+		// Added vertical domianMarker
+		ValueMarker marker = new ValueMarker(maxIndex);
+		marker.setPaint(Color.CYAN);
+		marker.setLabel("Max Value: " + maxValue);
+		marker.setLabelFont(new Font("Serif", Font.BOLD, 14)); 
+		marker.setLabelPaint(Color.WHITE);
+		marker.setLabelAnchor(RectangleAnchor.CENTER);
+		marker.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
+		marker.setStroke(new BasicStroke(2.0f)); 
+		plot.addDomainMarker(marker); 
 		
 		// Added horizontal theesholdMarker
 		float thresholdValue = maxValue / 2;
@@ -344,7 +449,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 			}
 		}
 		System.out.println("No peak found.");
-		return -1;
+		return Float.POSITIVE_INFINITY;
 	}
 
 	/***
@@ -358,27 +463,46 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 			XYPlot plot = selectionChart.getXYPlot();
 			// Retrieve data and convert it into a List<Float> for processing
 			XYSeriesCollection dataset = (XYSeriesCollection) plot.getDataset();
-			XYSeries series = dataset.getSeries(0);
-			double[][] data = series.toArray();
-			List<Float> values = Arrays.stream(data[1]).mapToObj(d -> Float.valueOf((float) d))
-					.collect(Collectors.toList());
 
 			// Access current marker position and determine the next index to check for a
 			// peak
 			ValueMarker marker = (ValueMarker) plot.getDomainMarkers(Layer.FOREGROUND).iterator().next();
 			int index = (int) Math.ceil(marker.getValue()) + 1;
-
+			
 			// Retrieve threshold value from the threshold marker
 			ValueMarker thresholdMarker = (ValueMarker) plot.getRangeMarkers(Layer.FOREGROUND).iterator().next();
 			double threshold = thresholdMarker.getValue();
+			
+			int nSeries = dataset.getSeriesCount();
+			
+			float peakIndex = Float.POSITIVE_INFINITY;
+			float peakValue = 0;
+			float peakDistance = Float.POSITIVE_INFINITY;
+			
+			for (int s=0; s < nSeries; s += 2) {
+				XYSeries series = dataset.getSeries(s);
+				double[][] data = series.toArray();
+				List<Float> values = Arrays.stream(data[1]).mapToObj(d -> Float.valueOf((float) d))
+					.collect(Collectors.toList());
+				float seriesPeakIndex = nextPeak(index, values, threshold);
+				
+				float seriesPeakDistance = seriesPeakIndex - index;
+				
+				if (seriesPeakDistance <= 0)
+					seriesPeakDistance += values.size();
+				
+				if (seriesPeakDistance < peakDistance) {
+					peakIndex = seriesPeakIndex;
+					peakValue = values.get(Math.round(peakIndex));
+					peakDistance = seriesPeakDistance;
+				}
+			}
 
 			// Call the nextPeak method to find the next peak and update the chart
-			float peakIndex = nextPeak(index, values, threshold);
-			if (peakIndex != -1) {
+			if (peakIndex != Float.POSITIVE_INFINITY) {
 				System.out.println("Next peak is at index: " + peakIndex);
 				marker.setValue(peakIndex);
-				float y = values.get(Math.round(peakIndex));
-				marker.setLabel(String.format("Value: %.2f, Derivative: %.2f", y, 0.0f));
+				marker.setLabel(String.format("Value: %.2f, Derivative: %.2f", peakValue, 0.0f));
 			}
 		} else {
 			super.actionPerformed(e);
@@ -389,7 +513,9 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
      * Refreshes the plot after updates.
      */
     private void refreshPlot() {
-        updateChartColor(currentColor);
+    	for(int c = 0; c < currentColors.length; ++c) {
+    		updateChartColor(currentColors[c], c);
+    	}
     }
 
 	@Override
@@ -426,12 +552,12 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
      * Sets the LUT for color updates based on selected LUT.
      * @param lut the LUT data structure from which to extract the color information
      */
-	public void setLUT(ModelStorageBase lut) {
+	public void setLUT(ModelStorageBase lut, int channelIndex) {
 		if(lut instanceof ModelLUT) {
 			ModelLUT lut2 = (ModelLUT) lut;
 			int[] extents = lut2.getExtents();// Get the dimensions of the LUT
 			Color c = lut2.getColor(extents[1]-1);// Fetch the color at the last index of the LUT
-			updateChartColor(c);
+			updateChartColor(c, channelIndex);
 		}
 	}
 
@@ -439,12 +565,13 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
      * Updates the chart color and applies a gradient based on the selected color channel.
      * @param color the color to which the chart elements will be updated.
      */
-	private void updateChartColor(Color color) {
-		currentColor = color;
+	private void updateChartColor(Color color, int channelIndex) {
+		currentColors[channelIndex] = color;
 	    XYPlot plot = selectionChart.getXYPlot();
 	    GradientPaint gradientPaint = createGradientPaint(color);
 	    XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-	    renderer.setSeriesPaint(0, gradientPaint);
+	    renderer.setSeriesPaint(channelIndex * 2, gradientPaint);
+	    renderer.setSeriesVisible(channelIndex * 2 + 1, false);
 	    plot.setRenderer(renderer);
 	    repaint();
 	}
@@ -463,13 +590,21 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
      * Sets up the renderer with a gradient paint.
      * @param plot the plot to which the renderer will be set.
      */
-	private void setupRendererWithGradient(XYPlot plot) {
-	    GradientPaint gradientPaint = createGradientPaint(currentColor);
+	private void setupRendererWithGradient(XYPlot plot, int channelIndex) {
+	    GradientPaint gradientPaint = createGradientPaint(currentColors[channelIndex]);
 	    if (gradientPaint != null) {
 	        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-	        renderer.setSeriesPaint(0, gradientPaint);
-	        renderer.setSeriesStroke(0, new BasicStroke(2.0f));
+	        renderer.setSeriesPaint(channelIndex, gradientPaint);
+	        renderer.setSeriesStroke(channelIndex, new BasicStroke(2.0f));
 	        plot.setRenderer(renderer);
 	    }
+	}
+
+	public void setChannelNames(String[] channelNames) {
+		this.channelNames = channelNames;
+		this.currentColors = IntStream
+				.range(0, channelNames.length)
+				.mapToObj(i -> Color.YELLOW)
+				.toArray(Color[]::new);
 	}
 }
