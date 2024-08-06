@@ -2214,31 +2214,17 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	 * @param values List of values corresponding to each 3D point.
 	 * @param title  Title for the updated plot.
 	 */
-	public void updatePlotPanel(List<Vector3f> points, List<Float> values, String title) {
-		SwingUtilities.invokeLater(() -> {
-			chartPanel.updateChart(values, title);
-			chartPanel.setChart3DPoints(points);
-
-			chartPanel.revalidate();
-			chartPanel.repaint();
-		});
-	}
-	
 	@Override
-	public void updatePlotPanel(List<Vector3f> points, List<List<Float>> values, List<String> titles) {
+	public void updatePlotPanel(List<Vector3f> points, List<List<Float>> values) {
 	    SwingUtilities.invokeLater(() -> {
-	    	chartPanel.updateCharts(values, titles.get(0));
+	    	updatePlotBasedOnCheckBoxes(values);
+	    	//chartPanel.updateCharts(values);
 	        chartPanel.setChart3DPoints(points);
 	        chartPanel.revalidate();
 	        chartPanel.repaint();
 	    });
 	}
 	
-
-
-	
-	
-
 	/**
 	 * Updates the 3D model visualization based on a new 3D point.
 	 * 
@@ -2246,6 +2232,26 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	 */
 	public void update3DModel(Vector3f point) {
 		activeImage.voiManager.modify3DMarker(point, point, point);
+	}
+
+	private void updatePlotBasedOnCheckBoxes(List<List<Float>> allValues) {
+	    List<List<Float>> values = new ArrayList<>();
+	    List<Integer> channelIndices = new ArrayList<>();
+
+	    for (Component comp : imageChannels.getComponents()) {
+	        if (comp instanceof JCheckBox) {
+	            JCheckBox checkBox = (JCheckBox) comp;
+	            if (checkBox.isSelected()) {
+	                int channelIndex = imageChannel(checkBox.getActionCommand());
+	                if (channelIndex != -1) {
+	                	List<Float> channelValues = allValues.get(channelIndex); 
+	                	channelIndices.add(channelIndex);
+	                    values.add(channelValues);
+	                }
+	            }
+	        }
+	    }
+	    chartPanel.updateCharts(values, channelIndices);
 	}
 
 	/**
@@ -3184,9 +3190,10 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			JCheckBox box = new JCheckBox(subDir[i], true);
 			box.setActionCommand(subDir[i]);
 			box.addActionListener(this);
-			imageChannels.add(box);
+			imageChannels.add(box); 
 		}
 	}
+	
 
 	private int imageChannel(String cmd) {
 

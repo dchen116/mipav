@@ -1077,8 +1077,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 
 	    List<List<Float>> wrappedValues = Arrays.asList(plotValues); 
-	    List<String> titles = Arrays.asList("3-Color Chart"); 
-	    notifyPlotListeners(points, wrappedValues, titles);
+	    notifyPlotListeners(points, wrappedValues);
 	}
 	
 	private void PickVolume3DAccurateMode(Vector3f kPos, Vector3f kDir, Vector3f maxPtAccurate)  {
@@ -1104,9 +1103,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		    listOfPlotAccurateValues.add(plotAccurateValues);
 		}
 		
-	    //List<List<Float>> wrappedAccurateValues = Arrays.asList(plotAccurateValues); // Wrap single list into a list of lists
-	    List<String> titles = Arrays.asList("Selection Chart"); // Wrap the title into a list
-	    notifyPlotListeners(points, listOfPlotAccurateValues, titles);
+	    notifyPlotListeners(points, listOfPlotAccurateValues);
 	}
 
 	
@@ -1281,10 +1278,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	// update all listeners with new plot values and title.
 	
-	//public void notifyPlotListeners(List<Vector3f> points, List<Float> values, String title) {
-	public void notifyPlotListeners(List<Vector3f> points, List<List<Float>> values, List<String> title) {
+	public void notifyPlotListeners(List<Vector3f> points, List<List<Float>> values) {
 		for (PlotDataUpdateListener listener : listeners) {
-			listener.updatePlotPanel(points, values, title);
+			listener.updatePlotPanel(points, values);
 		}
 	}
 	
