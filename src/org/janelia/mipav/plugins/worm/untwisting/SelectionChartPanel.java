@@ -43,7 +43,7 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	private PlugInDialogVolumeRenderDualJanelia parent;
 	private Color[] currentColors = { Color.YELLOW };
 	private String[] channelNames;
-	private List<Integer> channelIndices = new ArrayList<>();
+	private List<Boolean> channelSelected = new ArrayList<>();
 
 	/**
      * Constructor to initialize the chart panel with data.
@@ -166,8 +166,8 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	/**
      * Updates the charts with new data and title.
      */
-	public void updateCharts(List<List<Float>> values, List<Integer> channelIndices) {
-		this.channelIndices = channelIndices;
+	public void updateCharts(List<List<Float>> values, List<Boolean> channelSelected) {
+		this.channelSelected = channelSelected;
 		this.selectionChart = createCharts(values, "Selection Chart", this);
 		setChart(this.selectionChart);
 		refreshPlot();
@@ -317,7 +317,8 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 			
 			List<Float> values = listOfValues.get(j);
 		
-			XYSeries series = new XYSeries("Data " + channelNames[channelIndices.get(j)]);
+			//XYSeries series = new XYSeries("Data " + channelNames[channelSelected.get(j)]);
+			XYSeries series = new XYSeries("Data " + channelNames[j]);
 			
 			// Populate the series with values and track the maximum value and its index
 			for (int i = 0; i < values.size(); i++) {
@@ -335,7 +336,8 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 			// Calculate slopes and add to the series
 			List<Float> slopes = calculateSecantSlopes(values);
 			
-		    XYSeries slopeSeries = new XYSeries("Slopes " + channelNames[channelIndices.get(j)]);
+		   // XYSeries slopeSeries = new XYSeries("Slopes " + channelNames[channelSelected.get(j)]);
+		    XYSeries slopeSeries = new XYSeries("Slopes " + channelNames[j]);
 		    for (int i = 2; i < values.size(); i++) { 
 		        double slopeIndex = i -1; // offset half an interval, 0.5, from the original values along the x-axis.
 		        slopeSeries.add(slopeIndex, slopes.get(i-2));
@@ -482,21 +484,23 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 			float peakDistance = Float.POSITIVE_INFINITY;
 			
 			for (int s=0; s < nSeries; s += 2) {
-				XYSeries series = dataset.getSeries(s);
-				double[][] data = series.toArray();
-				List<Float> values = Arrays.stream(data[1]).mapToObj(d -> Float.valueOf((float) d))
-					.collect(Collectors.toList());
-				float seriesPeakIndex = nextPeak(index, values, threshold);
-				
-				float seriesPeakDistance = seriesPeakIndex - index;
-				
-				if (seriesPeakDistance <= 0)
-					seriesPeakDistance += values.size();
-				
-				if (seriesPeakDistance < peakDistance) {
-					peakIndex = seriesPeakIndex;
-					peakValue = values.get(Math.round(peakIndex));
-					peakDistance = seriesPeakDistance;
+				if (channelSelected.get(s/2)) {
+					XYSeries series = dataset.getSeries(s);
+					double[][] data = series.toArray();
+					List<Float> values = Arrays.stream(data[1]).mapToObj(d -> Float.valueOf((float) d))
+						.collect(Collectors.toList());
+					float seriesPeakIndex = nextPeak(index, values, threshold);
+					
+					float seriesPeakDistance = seriesPeakIndex - index;
+					
+					if (seriesPeakDistance <= 0)
+						seriesPeakDistance += values.size();
+					
+					if (seriesPeakDistance < peakDistance) {
+						peakIndex = seriesPeakIndex;
+						peakValue = values.get(Math.round(peakIndex));
+						peakDistance = seriesPeakDistance;
+					}
 				}
 			}
 
@@ -549,6 +553,17 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {			
 		return false;
 	}
+	
+	public void setChannelSelected(List<Boolean> channelSelected) {
+		this.channelSelected = channelSelected;
+		refreshPlot();
+	}
+	
+	public void setChannelSelected(int which, boolean selected) {
+		channelSelected.set(which, selected);
+		refreshPlot();
+	}
+	
 
 	 /**
      * Sets the LUT for color updates based on selected LUT.
@@ -570,17 +585,13 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	private void updateChartColor(Color color, int channelIndex) {
 		currentColors[channelIndex] = color;
 	    XYPlot plot = selectionChart.getXYPlot();
-	    int channelCount = 0;
-	    for(Integer channelIndex2: channelIndices) {
-	    	if (channelIndex == channelIndex2) {
-	    		GradientPaint gradientPaint = createGradientPaint(color);
-			    XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-			    renderer.setSeriesPaint(channelCount * 2, gradientPaint);
-			    renderer.setSeriesVisible(channelCount * 2 + 1, false);
-			    plot.setRenderer(renderer);
-	    	} 
-	    	channelCount++;
-	    }
+		GradientPaint gradientPaint = createGradientPaint(color);
+	    XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+	    renderer.setSeriesPaint(channelIndex * 2, gradientPaint);
+	    if (channelSelected.size() > channelIndex)
+	    	renderer.setSeriesVisible(channelIndex * 2, channelSelected.get(channelIndex));
+	    renderer.setSeriesVisible(channelIndex * 2 + 1, false);
+	    plot.setRenderer(renderer);
 	    repaint();
 	}
   

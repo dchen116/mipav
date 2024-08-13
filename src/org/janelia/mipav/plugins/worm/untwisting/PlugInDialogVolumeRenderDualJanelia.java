@@ -840,6 +840,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 //			System.err.println(which + "  " + selected );
 			if (which != -1) {
 				activeRenderer.setImageOn(which, selected);
+				chartPanel.setChannelSelected(which, selected);
 			}
 			if (opacityTab != null && opacityTab.getTabCount() > 0) {
 				which = opacityTab.getSelectedIndex();
@@ -2235,23 +2236,23 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	}
 
 	private void updatePlotBasedOnCheckBoxes(List<List<Float>> allValues) {
-	    List<List<Float>> values = new ArrayList<>();
+	    //List<List<Float>> values = new ArrayList<>();
 	    List<Integer> channelIndices = new ArrayList<>();
+	    List<Boolean> channelSelected = Arrays.asList(new Boolean[allValues.size()]);
 
 	    for (Component comp : imageChannels.getComponents()) {
 	        if (comp instanceof JCheckBox) {
 	            JCheckBox checkBox = (JCheckBox) comp;
-	            if (checkBox.isSelected()) {
-	                int channelIndex = imageChannel(checkBox.getActionCommand());
-	                if (channelIndex != -1) {
-	                	List<Float> channelValues = allValues.get(channelIndex); 
-	                	channelIndices.add(channelIndex);
-	                    values.add(channelValues);
-	                }
-	            }
+                int channelIndex = imageChannel(checkBox.getActionCommand());
+                if (channelIndex != -1) {
+                	channelSelected.set(channelIndex, checkBox.isSelected());
+                	//List<Float> channelValues = allValues.get(channelIndex); 
+                	//channelIndices.add(channelIndex);
+                    //values.add(channelValues);
+                }
 	        }
 	    }
-	    chartPanel.updateCharts(values, channelIndices);
+	    chartPanel.updateCharts(allValues, channelSelected);
 	}
 
 	/**
