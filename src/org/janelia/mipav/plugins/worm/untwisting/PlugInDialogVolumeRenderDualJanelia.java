@@ -47,6 +47,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
 import gov.nih.mipav.view.renderer.WildMagic.RendererListener;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
@@ -73,6 +74,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -133,6 +135,7 @@ import org.jocl.Sizeof;
 
 import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
@@ -315,6 +318,338 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	private IntegratedWormData activeImage = null;
 
 	private Dimension currentSize = null;
+	
+	// Diyi Global settings
+	public class GlobalSettings {
+		private float lutSetting;
+		private float opacitySetting;
+		private float clipSetting;
+		private float selectionSetting;
+		private float curvesSetting;
+		private float latticeSetting;
+		private float annotationSetting;
+
+		// Getters and setters for each setting
+		public float getLutSetting() {
+			return lutSetting;
+		}
+
+		public void setLutSetting(float lutSetting) {
+			this.lutSetting = lutSetting;
+		}
+
+		public float getOpacitySetting() {
+			return opacitySetting;
+		}
+
+		public void setOpacitySetting(float opacitySetting) {
+			this.opacitySetting = opacitySetting;
+		}
+
+		public float getClipSetting() {
+			return clipSetting;
+		}
+
+		public void setClipSetting(float clipSetting) {
+			this.clipSetting = clipSetting;
+		}
+
+		public float getSelectionSetting() {
+			return selectionSetting;
+		}
+
+		public void setSelectionSetting(float selectionSetting) {
+			this.selectionSetting = selectionSetting;
+		}
+
+		public float getCurvesSetting() {
+			return curvesSetting;
+		}
+
+		public void setCurvesSetting(float curvesSetting) {
+			this.curvesSetting = curvesSetting;
+		}
+
+		public float getLatticeSetting() {
+			return latticeSetting;
+		}
+
+		public void setLatticeSetting(float latticeSetting) {
+			this.latticeSetting = latticeSetting;
+		}
+
+		public float getAnnotationSetting() {
+			return annotationSetting;
+		}
+
+		public void setAnnotationSetting(float annotationSetting) {
+			this.annotationSetting = annotationSetting;
+		}
+
+		public void applySettings(ModelImage image) {
+			// Apply the settings to the image
+			// Example: image.setLutSetting(lutSetting);
+		}
+
+		public void resetSettings() {
+			this.lutSetting = 1.0f;
+			this.opacitySetting = 1.0f;
+			this.clipSetting = 1.0f;
+			this.selectionSetting = 1.0f;
+			this.curvesSetting = 1.0f;
+			this.latticeSetting = 1.0f;
+			this.annotationSetting = 1.0f;
+		}
+	}
+
+	private GlobalSettings globalSettings = new GlobalSettings();
+
+	// Method to save settings from the current panels
+	public void saveSettings() {
+		globalSettings.setLutSetting(getLutSetting());
+		globalSettings.setOpacitySetting(getOpacitySetting());
+		globalSettings.setClipSetting(getClipSetting());
+		globalSettings.setSelectionSetting(getSelectionSetting());
+		globalSettings.setCurvesSetting(getCurvesSetting());
+		globalSettings.setLatticeSetting(getLatticeSetting());
+		globalSettings.setAnnotationSetting(getAnnotationSetting());
+	}
+
+	// Method to apply settings to the current panels
+	public void applySettings() {
+		/*
+		 * setLutSetting(globalSettings.getLutSetting());
+		 * setOpacitySetting(globalSettings.getOpacitySetting());
+		 * setClipSetting(globalSettings.getClipSetting());
+		 * setSelectionSetting(globalSettings.getSelectionSetting());
+		 * setCurvesSetting(globalSettings.getCurvesSetting());
+		 * setLatticeSetting(globalSettings.getLatticeSetting());
+		 * setAnnotationSetting(globalSettings.getAnnotationSetting());
+		 */
+		// Apply LUT settings
+		// TODO: apply the stored settings back to the modelLUT for LUT
+		java.util.prefs.Preferences lutPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
+		System.out.println("lutType: " + lutPrefs.getInt("lutType", 0));
+		System.out.println("lutExtents: " + lutPrefs.get("lutExtents", ""));
+		System.out.println("lutTransferFunction: " + lutPrefs.get("lutTransferFunction", ""));
+		
+		// convert lutExtents to int[]
+		String lutExtents = lutPrefs.get("lutExtents", "");
+		String[] extents = lutExtents.substring(1, lutExtents.length()-1).split(",");
+		int[] extentsInt = new int[extents.length];
+		for (int i = 0; i < extents.length; i++) {
+            extentsInt[i] = Integer.parseInt(extents[i].trim());
+        }
+		
+		// convert lutTransferFunction to TransferFunction
+		ModelLUT lut = new ModelLUT(lutPrefs.getInt("lutType", 0), 256, extentsInt);
+		TransferFunction lutTransferFunction = new TransferFunction();
+		String lutTransferFunctionStr = lutPrefs.get("lutTransferFunction", "");
+
+	    // Parse the lutTransferFunction string
+	    String[] parts = lutTransferFunctionStr.split("\\s+");
+	    int numPoints = Integer.parseInt(parts[1]);
+	    for (int i = 0; i < numPoints; i++) {
+	    	float x = Float.parseFloat(parts[2 + i * 2]);
+	        float y = Float.parseFloat(parts[3 + i * 2]);
+	        lutTransferFunction.addPoint(x, y);
+	    	//lutTransferFunction.addPoint(Float.parseFloat(parts[2 + i * 2]), Float.parseFloat(parts[3 + i * 2]));
+	    	System.out.println("Added point to transfer function: (" + x + ", " + y + ")");
+	    }
+	    lut.setTransferFunction(lutTransferFunction);
+		
+	 // Ensure activeImage are not null
+	    if (activeImage != null) {
+	        // Apply the LUT to the active image and update the histogram panel
+	    	int which = lutTab.getSelectedIndex();
+	    	if (which != -1) {
+	    		activeImage.hyperstack[which].UpdateImages(lut);
+	        	System.out.println("Updating image " + which + " with LUT");
+	            if (activeImage.lutHistogramPanel != null && activeImage.lutHistogramPanel[which] != null) {
+	            	activeImage.lutHistogramPanel[which].setLUTA(lut);
+	                System.out.println("Updated histogram panel " + which + " with LUT");
+	            }
+	        }
+	        System.out.println("LUT applied to active image and histogram panel.");
+	    } else {
+	        System.err.println("Error: activeImage or integratedData is null.");
+	    }
+	    
+	    // Apply opacity settings
+	    java.util.prefs.Preferences opacityPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
+	    System.out.println("opacityTransferFunction: " + opacityPrefs.get("opacityTransferFunction", ""));
+	   
+	    // Convert opacityTransferFunction to TransferFunction
+	    TransferFunction opacityTransferFunction = new TransferFunction();
+	    String opacityTransferFunctionStr = opacityPrefs.get("opacityTransferFunction", "");
+	   
+	    // Parse the opacityTransferFunction string
+	    String[] opacityParts = opacityTransferFunctionStr.split("\\s+");
+	    int numOpacityPoints = Integer.parseInt(opacityParts[1]);
+		for (int i = 0; i < numOpacityPoints; i++) {
+			float x = Float.parseFloat(opacityParts[2 + i * 2]);
+			float y = Float.parseFloat(opacityParts[3 + i * 2]);
+			opacityTransferFunction.addPoint(x, y);
+			System.out.println("Added point to opacity transfer function: (" + x + ", " + y + ")");
+		}
+
+		// Ensure activeImage is not null
+	    if (activeImage != null) {
+	        // Apply the opacity transfer function to the active image
+	        int which = opacityTab.getSelectedIndex();
+	        if (which != -1) {
+	        	//activeImage.volOpacityPanel[which].updateSlider(opacityTransferFunction);
+	        	ViewJComponentVolOpacityBase compA = activeImage.volOpacityPanel[which].getCompA();
+	        	compA.updateTransFunc(opacityTransferFunction);
+	        	activeImage.volOpacityPanel[which].update(false);
+	        
+	            System.out.println("Updating image " + which + " with opacity transfer function");
+	        }
+	        System.out.println("Opacity transfer function applied to active image.");
+	    } else {
+	        System.err.println("Error: activeImage or integratedData is null.");
+	    }
+		
+	    
+		System.out.println("applied!");	
+	}
+
+	// Method to reset global settings
+	public void resetGlobalSettings() {
+		globalSettings.resetSettings();
+	}
+
+	// Implement methods to get and set settings for each panel
+	
+	private float getLutSetting() {
+		// TODO: loop the i = 0 to activeImage.hyperstack.length
+		// for now, just get the first one
+		// 
+		int i = 0;
+		// Retrieve the LUT setting from the LUT panel
+		ModelLUT lut = activeImage.hyperstack[i].GetLUT();
+		int lutType = lut.getLUTType();
+		TransferFunction lutTransferFunction = lut.getTransferFunction();
+		//Vector2f[] lutPoints = lutTransferFunction.getFunction();
+		int[] lutExtents = lut.getExtents();
+		
+		System.out.println("lutType: " + lutType);
+		//System.out.println("lutPoints: " + Arrays.toString(lutPoints));
+		System.out.println("lutExtents: " + Arrays.toString(lutExtents));
+		System.out.println("lutTransferFunction: " + lutTransferFunction);
+		java.util.prefs.Preferences lutPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
+		lutPrefs.putInt("lutType", lutType);
+		lutPrefs.put("lutExtents", Arrays.toString(lutExtents));
+		lutPrefs.put("lutTransferFunction", lutTransferFunction.toString());
+		System.out.println("LUT settings saved!");
+
+		return 0.0f; //lutPanel.getLutSetting();
+	}
+
+	private void setLutSetting(float setting) {
+		// Update the LUT setting in the LUT panel
+		//lutPanel.setLutSetting(setting);	
+	}
+
+	private float getOpacitySetting() {
+	    // TODO: loop the i = 0 to activeImage.hyperstack.length
+	    // for now, just get the first one
+
+	    int i = 0;
+	    // Retrieve the opacity setting from the opacity panel
+	    
+	    ViewJComponentVolOpacityBase volOpacity = activeImage.volOpacityPanel[i].getCompA();
+	    TransferFunction opacityTransferFunction = volOpacity.getOpacityTransferFunction();
+	    System.out.println("opacityTransferFunction: " + opacityTransferFunction);
+	    
+	    java.util.prefs.Preferences opacityPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
+	    opacityPrefs.put("opacityTransferFunction", opacityTransferFunction.toString());
+	    System.out.println("Opacity settings saved!");
+
+	    return 0.0f;
+	}
+
+	private void setOpacitySetting(float setting) {
+		// Update the opacity setting in the opacity panel
+		//opacityPanel.setOpacitySetting(setting);
+	}
+
+	private float getClipSetting() {
+		// Retrieve the clip setting from the clip panel
+		return 0.0f; //clipPanel.getClipSetting();
+	}
+
+	private void setClipSetting(float setting) {
+		// Update the clip setting in the clip panel
+		//clipPanel.setClipSetting(setting);
+	}
+
+	private float getSelectionSetting() {
+		// Retrieve the selection setting from the selection chart panel
+		return 0.0f; //chartPanel.getSelectionSetting();
+	}
+
+	private void setSelectionSetting(float setting) {
+		// Update the selection setting in the selection chart panel
+		//chartPanel.setSelectionSetting(setting);
+	}
+
+	private float getCurvesSetting() {
+		// Retrieve the curves setting from the curve panel
+		return 0.0f; //curvePanel.getCurvesSetting();
+	}
+
+	private void setCurvesSetting(float setting) {
+		// Update the curves setting in the curve panel
+		//curvePanel.setCurvesSetting(setting);
+	}
+
+	private float getLatticeSetting() {
+		// Retrieve the lattice setting from the lattice panel
+		return 0.0f; //latticePanel.getLatticeSetting();
+	}
+
+	private void setLatticeSetting(float setting) {
+		// Update the lattice setting in the lattice panel
+		//latticePanel.setLatticeSetting(setting);
+	}
+
+	private float getAnnotationSetting() {
+		// Retrieve the annotation setting from the annotation panels
+		return 0.0f; //annotationPanels.getAnnotationSetting();
+	}
+
+	private void setAnnotationSetting(float setting) {
+		// Update the annotation setting in the annotation panels
+		//annotationPanels.setAnnotationSetting(setting);
+	}
+
+	// Add UI elements to trigger saving, applying, and resetting settings
+	private JPanel addGlobalSettingsUI() {
+	    // Create a new panel for the buttons
+	    JPanel buttonPanel = new JPanel();
+	    buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+
+	    // Add buttons to the new panel
+	    JButton saveSettingsButton = new JButton("Save Settings");
+	    saveSettingsButton.setActionCommand("saveSettings");
+	    saveSettingsButton.addActionListener(this);
+
+	    JButton applySettingsButton = new JButton("Apply Settings");
+	    applySettingsButton.setActionCommand("applySettings");
+	    applySettingsButton.addActionListener(this);
+
+	    JButton resetSettingsButton = new JButton("Reset Settings");
+	    resetSettingsButton.setActionCommand("resetSettings");
+	    resetSettingsButton.addActionListener(this);
+
+	    JLabel globalLabel = new JLabel("Global Settings:");
+	    buttonPanel.add(globalLabel);
+	    buttonPanel.add(saveSettingsButton);
+	    buttonPanel.add(applySettingsButton);
+	    buttonPanel.add(resetSettingsButton);
+	    return buttonPanel;
+	}
 
 	public PlugInDialogVolumeRenderDualJanelia() {
 		this.editMode = EditNONE;
@@ -329,6 +664,14 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	public void actionPerformed(ActionEvent event) {
 		String command = event.getActionCommand();
 		Object source = event.getSource();
+
+		if (command.equals("saveSettings")) {
+			saveSettings(); // Save settings from the current panels
+		} else if (command.equals("applySettings")) {
+			applySettings(); // Apply settings to the current panels
+		} else if (command.equals("resetSettings")) {
+			resetGlobalSettings(); // Reset global settings
+		}
 
 		if (command.equals("BrowseConclude")) {
 			UntwistDialog inputs = new UntwistDialog(baseFileLocText.getText());
@@ -2300,10 +2643,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		inputsPanel.add(baseFileNameText.getParent(), gbc);
 		gbc.gridy++;
 
+		// Set the default value for the range of images to segment to be empty
+		// This is to prevent the user from accidentally segmenting all images
+		
 		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", " ");
 		inputsPanel.add(rangeFusionText.getParent(), gbc);
 		gbc.gridx++;
-		reverseSequence = gui.buildCheckBox("reverse orderr", false);
+		reverseSequence = gui.buildCheckBox("reverse order", false);
 		inputsPanel.add(reverseSequence.getParent(), gbc);
 		gbc.gridx = 0;
 		gbc.gridy++;
@@ -2419,12 +2765,40 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.add(displayControls, BorderLayout.NORTH);
 
+		// Diyi: re-layout the topLeftPanel to add global settings panel
+		// Add topLeftPanel to the left panel
+		JPanel topLeftPanel = new JPanel(new GridBagLayout());
+		GridBagConstraints gbcglobal = new GridBagConstraints();
+		gbcglobal.insets = new Insets(5, 5, 5, 5); // Add some padding
+
+		// Add the image channels panel
 		imageChannels = new JPanel();
 		imageChannels.add(new JLabel("Select image channel:"));
-		imageChannels.add(new JLabel("Select Mode:"));
 		imageChannels.setVisible(false);
-		leftPanel.add(imageChannels, BorderLayout.CENTER);
+		gbcglobal.gridx = 0;
+		gbcglobal.gridy = 0;
+		gbcglobal.anchor = GridBagConstraints.WEST;
+		topLeftPanel.add(imageChannels, gbcglobal);
+
+		// Add the global settings panel
+		JPanel globalSettingsPanel = addGlobalSettingsUI();
+		gbcglobal.gridx = 0;
+		gbcglobal.gridy = 1;
+		gbcglobal.anchor = GridBagConstraints.WEST;
+		topLeftPanel.add(globalSettingsPanel, gbcglobal);
+
+		leftPanel.add(topLeftPanel, BorderLayout.WEST); //BorderLayout.CENTER will make the panel align to the center
 		leftPanel.add(tabbedPane, BorderLayout.SOUTH);
+		
+		
+		/*
+		 * JPanel topLeftPanel = new JPanel(new BorderLayout()); imageChannels = new
+		 * JPanel(); imageChannels.add(new JLabel("Select image channel:"));
+		 * imageChannels.setVisible(false); topLeftPanel.add(imageChannels,
+		 * BorderLayout.NORTH); topLeftPanel.add(addGlobalSettingsUI(),
+		 * BorderLayout.SOUTH); leftPanel.add(topLeftPanel, BorderLayout.CENTER);
+		 * leftPanel.add(tabbedPane, BorderLayout.SOUTH);
+		 */
 
 		JScrollPane scroller = new JScrollPane(leftPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -2562,7 +2936,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	private void initDisplayAnnotationsPanel(VolumeTriPlanarRender renderer, VOILatticeManagerInterface manager,
 			IntegratedWormData image) {
 		if (image.annotationPanelUI == null) {
-			image.annotationPanelUI = new JPanelAnnotations(manager, renderer, image.volumeImage);
+			image.annotationPanelUI = new JPanelAnnotations(manager, renderer, image.volumeImage, null);
 		}
 		image.annotationPanelUI.initDisplayAnnotationsPanel(manager, image.volumeImage, true, (dualGPU != null));
 
@@ -2645,7 +3019,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			IntegratedWormData image) {
 		// System.err.println("initDisplayLatticePanel");
 		if (image.latticeTable == null) {
-			image.latticeTable = new JPanelLattice(image.voiManager, image.volumeImage.GetImage());
+			image.latticeTable = new JPanelLattice(image.voiManager, image.volumeImage.GetImage(), null);
 		}
 		image.latticeTable.initDisplayAnnotationsPanel(image.voiManager, image.volumeImage.GetImage());
 
@@ -3528,6 +3902,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		if (file.exists() && file.isDirectory()) {
 			final String[] list = file.list();
 			String imageList = "";
+			int imageCount = 0;
 			for (int i = 0; i < list.length; i++) {
 				if (list[i].endsWith(".tif")) {
 					String temp = list[i].substring(list[i].lastIndexOf("_") + 1, list[i].indexOf(".tif"));
@@ -3535,10 +3910,13 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 					if (imageList != "")
 						imageList += ",";
 					imageList += temp;
+					imageCount++;
 				}
 			}
 			if (imageList != "") {
-				rangeFusionText.setText(imageList);
+				// Diyi: Changed the setText to NOT display the number of images loaded
+				//rangeFusionText.setText(imageList);
+				rangeFusionText.setText("Loaded " + imageCount + " images");
 			}
 		}
 	}
@@ -3610,7 +3988,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			volumeDirs = new String[tempList.size()];
 			String latticeDir = null;
 			for (int i = 0; i < tempList.size(); i++) {
-				volumeChecks[i] = gui.buildCheckBox(tempList.elementAt(i), true);
+				volumeChecks[i] = gui.buildCheckBox(tempList.elementAt(i), false); // Diyi: unchecked by default
 				volumeChecks[i].addActionListener(this);
 				input.add(volumeChecks[i].getParent());
 

@@ -95,13 +95,21 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	private JCheckBox ellipseCross;
 	private JSlider ellipseDiameter;
 	
+	private JPanelAnnotations annotationsPanel;
+	
 
 
-	public JPanelLattice( VOILatticeManagerInterface voiInterface, ModelImage image ) {
+	public JPanelLattice( VOILatticeManagerInterface voiInterface, ModelImage image, JPanelAnnotations annotationsPanel ) {
 		voiManager = voiInterface;
 		imageA = image;
 		wormData = new WormData(imageA);
 		voiManager.addLatticeListener(this);
+	}
+	
+	// Diyi
+	// To set the state of displaySeam
+	public void setDisplaySeam(boolean state) {
+	    displaySeam.setSelected(state);
 	}
 
 	/* (non-Javadoc)
@@ -116,6 +124,8 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			{
 				voiManager.showLatticeLabels( displaySeam.isSelected() );
 			}
+			// Sync the state with displayLatticeLabel in JPanelAnnotations
+	        annotationsPanel.setDisplayLatticeLabel(displaySeam.isSelected());
 		}
 		else if ( command.equals("displayLattice") )
 		{
