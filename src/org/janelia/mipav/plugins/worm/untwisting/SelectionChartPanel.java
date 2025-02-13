@@ -560,7 +560,8 @@ public class SelectionChartPanel extends ChartPanel implements MarkerChangeListe
 	}
 	
 	public void setChannelSelected(int which, boolean selected) {
-		channelSelected.set(which, selected);
+		if (channelSelected.size() > which)
+			channelSelected.set(which, selected);
 		refreshPlot();
 	}
 	
