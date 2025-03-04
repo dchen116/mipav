@@ -417,15 +417,46 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 
 	// Method to apply settings to the current panels
 	public void applySettings() {
-		/*
-		 * setLutSetting(globalSettings.getLutSetting());
-		 * setOpacitySetting(globalSettings.getOpacitySetting());
-		 * setClipSetting(globalSettings.getClipSetting());
-		 * setSelectionSetting(globalSettings.getSelectionSetting());
-		 * setCurvesSetting(globalSettings.getCurvesSetting());
-		 * setLatticeSetting(globalSettings.getLatticeSetting());
-		 * setAnnotationSetting(globalSettings.getAnnotationSetting());
-		 */
+	    setLutSetting();
+	    setOpacitySetting();
+		setLatticeSetting();
+		System.out.println("applied!");	
+	}
+
+	// Method to reset global settings
+	public void resetGlobalSettings() {
+		globalSettings.resetSettings();
+	}
+
+	// Implement methods to get and set settings for each panel
+	
+	private float getLutSetting() {
+		// TODO: loop the i = 0 to activeImage.hyperstack.length
+		// for now, just get the first one
+		// 
+		int i = 0;
+		// Retrieve the LUT setting from the LUT panel
+		ModelLUT lut = activeImage.hyperstack[i].GetLUT();
+		int lutType = lut.getLUTType();
+		TransferFunction lutTransferFunction = lut.getTransferFunction();
+		//Vector2f[] lutPoints = lutTransferFunction.getFunction();
+		int[] lutExtents = lut.getExtents();
+		
+		System.out.println("lutType: " + lutType);
+		//System.out.println("lutPoints: " + Arrays.toString(lutPoints));
+		System.out.println("lutExtents: " + Arrays.toString(lutExtents));
+		System.out.println("lutTransferFunction: " + lutTransferFunction);
+		java.util.prefs.Preferences lutPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
+		lutPrefs.putInt("lutType", lutType);
+		lutPrefs.put("lutExtents", Arrays.toString(lutExtents));
+		lutPrefs.put("lutTransferFunction", lutTransferFunction.toString());
+		System.out.println("LUT settings saved!");
+
+		return 0.0f; //lutPanel.getLutSetting();
+	}
+
+	private void setLutSetting() {
+		// Update the LUT setting in the LUT panel	
 		// Apply LUT settings
 		// TODO: apply the stored settings back to the modelLUT for LUT
 		java.util.prefs.Preferences lutPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
@@ -474,8 +505,29 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	    } else {
 	        System.err.println("Error: activeImage or integratedData is null.");
 	    }
+	}
+
+	private float getOpacitySetting() {
+	    // TODO: loop the i = 0 to activeImage.hyperstack.length
+	    // for now, just get the first one
+
+	    int i = 0;
+	    // Retrieve the opacity setting from the opacity panel
 	    
-	    // Apply opacity settings
+	    ViewJComponentVolOpacityBase volOpacity = activeImage.volOpacityPanel[i].getCompA();
+	    TransferFunction opacityTransferFunction = volOpacity.getOpacityTransferFunction();
+	    System.out.println("opacityTransferFunction: " + opacityTransferFunction);
+	    
+	    java.util.prefs.Preferences opacityPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
+	    opacityPrefs.put("opacityTransferFunction", opacityTransferFunction.toString());
+	    System.out.println("Opacity settings saved!");
+
+	    return 0.0f;
+	}
+
+	private void setOpacitySetting() {
+		// Update the opacity setting in the opacity panel
+		// Apply opacity settings
 	    java.util.prefs.Preferences opacityPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
 	    System.out.println("opacityTransferFunction: " + opacityPrefs.get("opacityTransferFunction", ""));
 	   
@@ -509,69 +561,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	    } else {
 	        System.err.println("Error: activeImage or integratedData is null.");
 	    }
-		
-	    
-		System.out.println("applied!");	
-	}
-
-	// Method to reset global settings
-	public void resetGlobalSettings() {
-		globalSettings.resetSettings();
-	}
-
-	// Implement methods to get and set settings for each panel
-	
-	private float getLutSetting() {
-		// TODO: loop the i = 0 to activeImage.hyperstack.length
-		// for now, just get the first one
-		// 
-		int i = 0;
-		// Retrieve the LUT setting from the LUT panel
-		ModelLUT lut = activeImage.hyperstack[i].GetLUT();
-		int lutType = lut.getLUTType();
-		TransferFunction lutTransferFunction = lut.getTransferFunction();
-		//Vector2f[] lutPoints = lutTransferFunction.getFunction();
-		int[] lutExtents = lut.getExtents();
-		
-		System.out.println("lutType: " + lutType);
-		//System.out.println("lutPoints: " + Arrays.toString(lutPoints));
-		System.out.println("lutExtents: " + Arrays.toString(lutExtents));
-		System.out.println("lutTransferFunction: " + lutTransferFunction);
-		java.util.prefs.Preferences lutPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
-		lutPrefs.putInt("lutType", lutType);
-		lutPrefs.put("lutExtents", Arrays.toString(lutExtents));
-		lutPrefs.put("lutTransferFunction", lutTransferFunction.toString());
-		System.out.println("LUT settings saved!");
-
-		return 0.0f; //lutPanel.getLutSetting();
-	}
-
-	private void setLutSetting(float setting) {
-		// Update the LUT setting in the LUT panel
-		//lutPanel.setLutSetting(setting);	
-	}
-
-	private float getOpacitySetting() {
-	    // TODO: loop the i = 0 to activeImage.hyperstack.length
-	    // for now, just get the first one
-
-	    int i = 0;
-	    // Retrieve the opacity setting from the opacity panel
-	    
-	    ViewJComponentVolOpacityBase volOpacity = activeImage.volOpacityPanel[i].getCompA();
-	    TransferFunction opacityTransferFunction = volOpacity.getOpacityTransferFunction();
-	    System.out.println("opacityTransferFunction: " + opacityTransferFunction);
-	    
-	    java.util.prefs.Preferences opacityPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
-	    opacityPrefs.put("opacityTransferFunction", opacityTransferFunction.toString());
-	    System.out.println("Opacity settings saved!");
-
-	    return 0.0f;
-	}
-
-	private void setOpacitySetting(float setting) {
-		// Update the opacity setting in the opacity panel
-		//opacityPanel.setOpacitySetting(setting);
 	}
 
 	private float getClipSetting() {
@@ -605,13 +594,40 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	}
 
 	private float getLatticeSetting() {
-		// Retrieve the lattice setting from the lattice panel
+		// TODO: loop the i = 0 to activeImage.hyperstack.length
+	    // for now, just get the first one
+	    int i = 0;
+
+	    boolean displaySeam = activeImage.latticeTable.getDisplaySeam();
+	    boolean displayLattice = activeImage.latticeTable.getDisplayLattice();
+	    
+	    // Retrieve the lattice setting from the lattice panel
+	    java.util.prefs.Preferences latticePrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
+	    latticePrefs.putBoolean("displaySeam", displaySeam);
+	    latticePrefs.putBoolean("displayLattice", displayLattice);
+	    
+	    System.out.println("Lattice settings saved!");
+		
 		return 0.0f; //latticePanel.getLatticeSetting();
 	}
 
-	private void setLatticeSetting(float setting) {
-		// Update the lattice setting in the lattice panel
-		//latticePanel.setLatticeSetting(setting);
+	private void setLatticeSetting() {
+		// Update the lattice setting in the lattice panel 
+		// Apply lattice settings
+	    java.util.prefs.Preferences latticePrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
+	    boolean displaySeam = latticePrefs.getBoolean("displaySeam", false);
+	    boolean displayLattice = latticePrefs.getBoolean("displayLattice", false);
+	    
+	    // Ensure activeImage is not null
+		if (activeImage != null) {
+			// Apply the lattice settings to the active image
+			activeImage.latticeTable.setDisplaySeam(displaySeam);
+			activeImage.latticeTable.setDisplayLattice(displayLattice);
+			System.out.println("Lattice settings applied to active image.");
+		} else {
+			System.err.println("Error: activeImage or integratedData is null.");
+		}
+		
 	}
 
 	private float getAnnotationSetting() {
@@ -3916,7 +3932,10 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			if (imageList != "") {
 				// Diyi: Changed the setText to NOT display the number of images loaded
 				//rangeFusionText.setText(imageList);
-				rangeFusionText.setText("Loaded " + imageCount + " images");
+				//rangeFusionText.setText("Loaded " + imageCount + " images");
+				String[] imageArray = imageList.split(",");
+				String range = imageArray[0] + "-" + imageArray[imageArray.length - 1];
+				rangeFusionText.setText("Input Images from range " + range );
 			}
 		}
 	}

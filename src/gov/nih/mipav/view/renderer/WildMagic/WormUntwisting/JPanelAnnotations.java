@@ -449,7 +449,9 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	            voiManager.showLatticeLabels(displayLatticeLabel.isSelected());
 	        }
 	        // Sync the state with displaySeam in JPanelLattice
-	        latticePanel.setDisplaySeam(displayLatticeLabel.isSelected());
+	        if (latticePanel != null) {
+	        	latticePanel.setDisplaySeam(displayLatticeLabel.isSelected());
+	        }
 		}
 		else if ( source == volumeClip )
 		{
