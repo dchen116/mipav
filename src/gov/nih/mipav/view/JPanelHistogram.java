@@ -17,6 +17,7 @@ import gov.nih.mipav.view.dialogs.JDialogThresholdRGB;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -1005,7 +1006,23 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			return;
 		}
 		LUT = newLUT;
-		if ( !image.isColorImage() )
+		Container pppp = getParent().getParent().getParent().getParent();
+		if (javax.swing.JTabbedPane.class.isInstance(pppp)){
+			if (((javax.swing.JTabbedPane)pppp).getSelectedComponent()==getParent().getParent().getParent())
+            {
+                if ( !image.isColorImage() )
+                {
+                    histoPanel.getLUTComponent().show((ModelLUT)LUT);
+                    histoPanel.getHistoLUTComponent().showHistogram((ModelLUT)LUT);
+                }
+                else
+                {
+                    histoPanel.getHistoLUTComponent().setLUT(LUT);
+                    histoPanel.getHistoLUTComponent().showHistogram(null);			
+                }	
+			}
+		}
+		else if ( !image.isColorImage() )
 		{
 			histoPanel.getLUTComponent().show((ModelLUT)LUT);
 			histoPanel.getHistoLUTComponent().showHistogram((ModelLUT)LUT);
