@@ -323,9 +323,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	public class GlobalSettings {
 		private float lutSetting;
 		private float opacitySetting;
-		private float clipSetting;
-		private float selectionSetting;
-		private float curvesSetting;
 		private float latticeSetting;
 		private float annotationSetting;
 
@@ -345,31 +342,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		public void setOpacitySetting(float opacitySetting) {
 			this.opacitySetting = opacitySetting;
 		}
-
-		public float getClipSetting() {
-			return clipSetting;
-		}
-
-		public void setClipSetting(float clipSetting) {
-			this.clipSetting = clipSetting;
-		}
-
-		public float getSelectionSetting() {
-			return selectionSetting;
-		}
-
-		public void setSelectionSetting(float selectionSetting) {
-			this.selectionSetting = selectionSetting;
-		}
-
-		public float getCurvesSetting() {
-			return curvesSetting;
-		}
-
-		public void setCurvesSetting(float curvesSetting) {
-			this.curvesSetting = curvesSetting;
-		}
-
+		
 		public float getLatticeSetting() {
 			return latticeSetting;
 		}
@@ -394,9 +367,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		public void resetSettings() {
 			this.lutSetting = 1.0f;
 			this.opacitySetting = 1.0f;
-			this.clipSetting = 1.0f;
-			this.selectionSetting = 1.0f;
-			this.curvesSetting = 1.0f;
 			this.latticeSetting = 1.0f;
 			this.annotationSetting = 1.0f;
 		}
@@ -408,9 +378,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	public void saveSettings() {
 		globalSettings.setLutSetting(getLutSetting());
 		globalSettings.setOpacitySetting(getOpacitySetting());
-		globalSettings.setClipSetting(getClipSetting());
-		globalSettings.setSelectionSetting(getSelectionSetting());
-		globalSettings.setCurvesSetting(getCurvesSetting());
 		globalSettings.setLatticeSetting(getLatticeSetting());
 		globalSettings.setAnnotationSetting(getAnnotationSetting());
 	}
@@ -561,36 +528,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	    } else {
 	        System.err.println("Error: activeImage or integratedData is null.");
 	    }
-	}
-
-	private float getClipSetting() {
-		// Retrieve the clip setting from the clip panel
-		return 0.0f; //clipPanel.getClipSetting();
-	}
-
-	private void setClipSetting(float setting) {
-		// Update the clip setting in the clip panel
-		//clipPanel.setClipSetting(setting);
-	}
-
-	private float getSelectionSetting() {
-		// Retrieve the selection setting from the selection chart panel
-		return 0.0f; //chartPanel.getSelectionSetting();
-	}
-
-	private void setSelectionSetting(float setting) {
-		// Update the selection setting in the selection chart panel
-		//chartPanel.setSelectionSetting(setting);
-	}
-
-	private float getCurvesSetting() {
-		// Retrieve the curves setting from the curve panel
-		return 0.0f; //curvePanel.getCurvesSetting();
-	}
-
-	private void setCurvesSetting(float setting) {
-		// Update the curves setting in the curve panel
-		//curvePanel.setCurvesSetting(setting);
 	}
 
 	private float getLatticeSetting() {
