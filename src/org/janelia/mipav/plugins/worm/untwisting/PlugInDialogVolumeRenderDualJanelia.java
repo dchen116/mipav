@@ -324,7 +324,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		private float lutSetting;
 		private float opacitySetting;
 		private float latticeSetting;
-		private float annotationSetting;
 
 		// Getters and setters for each setting
 		public float getLutSetting() {
@@ -342,7 +341,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		public void setOpacitySetting(float opacitySetting) {
 			this.opacitySetting = opacitySetting;
 		}
-		
+
 		public float getLatticeSetting() {
 			return latticeSetting;
 		}
@@ -351,230 +350,183 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 			this.latticeSetting = latticeSetting;
 		}
 
-		public float getAnnotationSetting() {
-			return annotationSetting;
-		}
-
-		public void setAnnotationSetting(float annotationSetting) {
-			this.annotationSetting = annotationSetting;
-		}
-
-		public void applySettings(ModelImage image) {
-			// Apply the settings to the image
-			// Example: image.setLutSetting(lutSetting);
-		}
-
 		public void resetSettings() {
 			this.lutSetting = 1.0f;
 			this.opacitySetting = 1.0f;
 			this.latticeSetting = 1.0f;
-			this.annotationSetting = 1.0f;
 		}
 	}
 
 	private GlobalSettings globalSettings = new GlobalSettings();
 
-	// Method to save settings from the current panels
+	// Methods to save, apply, and reset global settings
 	public void saveSettings() {
-		globalSettings.setLutSetting(getLutSetting());
-		globalSettings.setOpacitySetting(getOpacitySetting());
-		globalSettings.setLatticeSetting(getLatticeSetting());
-		globalSettings.setAnnotationSetting(getAnnotationSetting());
+		saveImageSettingsTo(activeImage, globalSettings);
 	}
 
-	// Method to apply settings to the current panels
 	public void applySettings() {
-	    setLutSetting();
-	    setOpacitySetting();
-		setLatticeSetting();
-		System.out.println("applied!");	
+		applyImageSettingsFrom(activeImage, globalSettings);
 	}
 
-	// Method to reset global settings
 	public void resetGlobalSettings() {
 		globalSettings.resetSettings();
 	}
 
-	// Implement methods to get and set settings for each panel
-	
-	private float getLutSetting() {
-		// TODO: loop the i = 0 to activeImage.hyperstack.length
-		// for now, just get the first one
-		// 
-		int i = 0;
-		// Retrieve the LUT setting from the LUT panel
-		ModelLUT lut = activeImage.hyperstack[i].GetLUT();
-		int lutType = lut.getLUTType();
-		TransferFunction lutTransferFunction = lut.getTransferFunction();
-		//Vector2f[] lutPoints = lutTransferFunction.getFunction();
-		int[] lutExtents = lut.getExtents();
-		
-		System.out.println("lutType: " + lutType);
-		//System.out.println("lutPoints: " + Arrays.toString(lutPoints));
-		System.out.println("lutExtents: " + Arrays.toString(lutExtents));
-		System.out.println("lutTransferFunction: " + lutTransferFunction);
-		java.util.prefs.Preferences lutPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
-		lutPrefs.putInt("lutType", lutType);
-		lutPrefs.put("lutExtents", Arrays.toString(lutExtents));
-		lutPrefs.put("lutTransferFunction", lutTransferFunction.toString());
-		System.out.println("LUT settings saved!");
-
-		return 0.0f; //lutPanel.getLutSetting();
+	// Save settings from image into given GlobalSettings object
+	private void saveImageSettingsTo(IntegratedWormData image, GlobalSettings settings) {
+		settings.setLutSetting(getLutSetting(image));
+		settings.setOpacitySetting(getOpacitySetting(image));
+		settings.setLatticeSetting(getLatticeSetting(image));
 	}
 
-	private void setLutSetting() {
-		// Update the LUT setting in the LUT panel	
-		// Apply LUT settings
-		// TODO: apply the stored settings back to the modelLUT for LUT
-		java.util.prefs.Preferences lutPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
-		System.out.println("lutType: " + lutPrefs.getInt("lutType", 0));
-		System.out.println("lutExtents: " + lutPrefs.get("lutExtents", ""));
-		System.out.println("lutTransferFunction: " + lutPrefs.get("lutTransferFunction", ""));
-		
-		// convert lutExtents to int[]
-		String lutExtents = lutPrefs.get("lutExtents", "");
-		String[] extents = lutExtents.substring(1, lutExtents.length()-1).split(",");
-		int[] extentsInt = new int[extents.length];
-		for (int i = 0; i < extents.length; i++) {
-            extentsInt[i] = Integer.parseInt(extents[i].trim());
-        }
-		
-		// convert lutTransferFunction to TransferFunction
-		ModelLUT lut = new ModelLUT(lutPrefs.getInt("lutType", 0), 256, extentsInt);
-		TransferFunction lutTransferFunction = new TransferFunction();
-		String lutTransferFunctionStr = lutPrefs.get("lutTransferFunction", "");
-
-	    // Parse the lutTransferFunction string
-	    String[] parts = lutTransferFunctionStr.split("\\s+");
-	    int numPoints = Integer.parseInt(parts[1]);
-	    for (int i = 0; i < numPoints; i++) {
-	    	float x = Float.parseFloat(parts[2 + i * 2]);
-	        float y = Float.parseFloat(parts[3 + i * 2]);
-	        lutTransferFunction.addPoint(x, y);
-	    	//lutTransferFunction.addPoint(Float.parseFloat(parts[2 + i * 2]), Float.parseFloat(parts[3 + i * 2]));
-	    	System.out.println("Added point to transfer function: (" + x + ", " + y + ")");
-	    }
-	    lut.setTransferFunction(lutTransferFunction);
-		
-	 // Ensure activeImage are not null
-	    if (activeImage != null) {
-	        // Apply the LUT to the active image and update the histogram panel
-	    	int which = lutTab.getSelectedIndex();
-	    	if (which != -1) {
-	    		activeImage.hyperstack[which].UpdateImages(lut);
-	        	System.out.println("Updating image " + which + " with LUT");
-	            if (activeImage.lutHistogramPanel != null && activeImage.lutHistogramPanel[which] != null) {
-	            	activeImage.lutHistogramPanel[which].setLUTA(lut);
-	                System.out.println("Updated histogram panel " + which + " with LUT");
-	            }
-	        }
-	        System.out.println("LUT applied to active image and histogram panel.");
-	    } else {
-	        System.err.println("Error: activeImage or integratedData is null.");
-	    }
+	// Apply settings from given GlobalSettings object to image
+	private void applyImageSettingsFrom(IntegratedWormData image, GlobalSettings settings) {
+		setLutSetting(image, settings.getLutSetting());
+		setOpacitySetting(image, settings.getOpacitySetting());
+		setLatticeSetting(image, settings.getLatticeSetting());
 	}
 
-	private float getOpacitySetting() {
-	    // TODO: loop the i = 0 to activeImage.hyperstack.length
-	    // for now, just get the first one
-
-	    int i = 0;
-	    // Retrieve the opacity setting from the opacity panel
-	    
-	    ViewJComponentVolOpacityBase volOpacity = activeImage.volOpacityPanel[i].getCompA();
-	    TransferFunction opacityTransferFunction = volOpacity.getOpacityTransferFunction();
-	    System.out.println("opacityTransferFunction: " + opacityTransferFunction);
-	    
-	    java.util.prefs.Preferences opacityPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
-	    opacityPrefs.put("opacityTransferFunction", opacityTransferFunction.toString());
-	    System.out.println("Opacity settings saved!");
-
-	    return 0.0f;
-	}
-
-	private void setOpacitySetting() {
-		// Update the opacity setting in the opacity panel
-		// Apply opacity settings
-	    java.util.prefs.Preferences opacityPrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
-	    System.out.println("opacityTransferFunction: " + opacityPrefs.get("opacityTransferFunction", ""));
-	   
-	    // Convert opacityTransferFunction to TransferFunction
-	    TransferFunction opacityTransferFunction = new TransferFunction();
-	    String opacityTransferFunctionStr = opacityPrefs.get("opacityTransferFunction", "");
-	   
-	    // Parse the opacityTransferFunction string
-	    String[] opacityParts = opacityTransferFunctionStr.split("\\s+");
-	    int numOpacityPoints = Integer.parseInt(opacityParts[1]);
-		for (int i = 0; i < numOpacityPoints; i++) {
-			float x = Float.parseFloat(opacityParts[2 + i * 2]);
-			float y = Float.parseFloat(opacityParts[3 + i * 2]);
-			opacityTransferFunction.addPoint(x, y);
-			System.out.println("Added point to opacity transfer function: (" + x + ", " + y + ")");
+	// Dual: Save settings from the active image into the GlobalSettings object
+	private float getLutSetting(IntegratedWormData image) {
+		lutTab.setSelectedIndex(0);
+		// for all channels
+		for (int which = 0; which < image.hyperstack.length; which++) {
+			ModelLUT lut = image.hyperstack[which].GetLUT();
+			java.util.prefs.Preferences lutPrefs = java.util.prefs.Preferences.userRoot()
+					.node(this.getClass().getName());
+			// Save the LUT settings to Preferences
+			String suffix = Integer.toString(which);
+			lutPrefs.putInt("lutType_" + suffix, lut.getLUTType());
+			lutPrefs.put("lutExtents_" + suffix, Arrays.toString(lut.getExtents()));
+			lutPrefs.put("lutTransferFunction_" + suffix, lut.getTransferFunction().toString());
 		}
-
-		// Ensure activeImage is not null
-	    if (activeImage != null) {
-	        // Apply the opacity transfer function to the active image
-	        int which = opacityTab.getSelectedIndex();
-	        if (which != -1) {
-	        	//activeImage.volOpacityPanel[which].updateSlider(opacityTransferFunction);
-	        	ViewJComponentVolOpacityBase compA = activeImage.volOpacityPanel[which].getCompA();
-	        	compA.updateTransFunc(opacityTransferFunction);
-	        	activeImage.volOpacityPanel[which].update(false);
-	        
-	            System.out.println("Updating image " + which + " with opacity transfer function");
-	        }
-	        System.out.println("Opacity transfer function applied to active image.");
-	    } else {
-	        System.err.println("Error: activeImage or integratedData is null.");
-	    }
+		return 0.0f;
 	}
 
-	private float getLatticeSetting() {
-		// TODO: loop the i = 0 to activeImage.hyperstack.length
-	    // for now, just get the first one
-	    int i = 0;
+	// Dual: Apply saved LUT settings to the active image
+	private void setLutSetting(IntegratedWormData image, float ignoredPlaceholder) {
+		// for save all channels
+		for (int which = 0; which < image.hyperstack.length; which++) {
 
-	    boolean displaySeam = activeImage.latticeTable.getDisplaySeam();
-	    boolean displayLattice = activeImage.latticeTable.getDisplayLattice();
-	    
-	    // Retrieve the lattice setting from the lattice panel
-	    java.util.prefs.Preferences latticePrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
-	    latticePrefs.putBoolean("displaySeam", displaySeam);
-	    latticePrefs.putBoolean("displayLattice", displayLattice);
-	    
-	    System.out.println("Lattice settings saved!");
-		
-		return 0.0f; //latticePanel.getLatticeSetting();
+			String suffix = Integer.toString(which);
+
+			java.util.prefs.Preferences lutPrefs = java.util.prefs.Preferences.userRoot()
+					.node(this.getClass().getName());
+			int lutType = lutPrefs.getInt("lutType_" + suffix, 0);
+			String extentsStr = lutPrefs.get("lutExtents_" + suffix, "");
+			String tfStr = lutPrefs.get("lutTransferFunction_" + suffix, "");
+
+			int[] extents = Arrays.stream(extentsStr.substring(1, extentsStr.length() - 1).split(",")).map(String::trim)
+					.mapToInt(Integer::parseInt).toArray();
+
+			ModelLUT lut = new ModelLUT(lutType, 256, extents);
+			TransferFunction tf = new TransferFunction();
+			String[] parts = tfStr.split("\\s+");
+			int numPoints = Integer.parseInt(parts[1]);
+			for (int i = 0; i < numPoints; i++) {
+				float x = Float.parseFloat(parts[2 + i * 2]);
+				float y = Float.parseFloat(parts[3 + i * 2]);
+				tf.addPoint(x, y);
+			}
+			lut.setTransferFunction(tf);
+
+			lutTab.setSelectedIndex(which);
+			image.hyperstack[which].UpdateImages(lut);
+			image.lutHistogramPanel[which].setLUTA(lut);
+		}
 	}
 
-	private void setLatticeSetting() {
-		// Update the lattice setting in the lattice panel 
-		// Apply lattice settings
-	    java.util.prefs.Preferences latticePrefs = java.util.prefs.Preferences.userRoot().node(this.getClass().getName());
-	    boolean displaySeam = latticePrefs.getBoolean("displaySeam", false);
-	    boolean displayLattice = latticePrefs.getBoolean("displayLattice", false);
-	    
-	    // Ensure activeImage is not null
-		if (activeImage != null) {
-			// Apply the lattice settings to the active image
-			activeImage.latticeTable.setDisplaySeam(displaySeam);
-			activeImage.latticeTable.setDisplayLattice(displayLattice);
-			System.out.println("Lattice settings applied to active image.");
+	// Dual: Save Opacity settings to the GlobalSettings object
+	private float getOpacitySetting(IntegratedWormData image) {
+		opacityTab.setSelectedIndex(0);
+		for (int which = 0; which < image.hyperstack.length; which++) {
+			ViewJComponentVolOpacityBase volOpacity = image.volOpacityPanel[which].getCompA();
+			TransferFunction opacityTransferFunction = volOpacity.getOpacityTransferFunction();
+
+			java.util.prefs.Preferences opacityPrefs = java.util.prefs.Preferences.userRoot()
+					.node(this.getClass().getName());
+
+			// Save the transfer function as a string for each channel
+			opacityPrefs.put("opacityTransferFunction_" + which, opacityTransferFunction.toString());
+
+			System.out.println("Saved opacity settings for image channel: " + which);
+		}
+		return 0.0f;
+	}
+
+	// Dual: Apply saved Opacity settings to the active image
+	private void setOpacitySetting(IntegratedWormData image, float ignoredPlaceholder) {
+		java.util.prefs.Preferences opacityPrefs = java.util.prefs.Preferences.userRoot()
+				.node(this.getClass().getName());
+
+		for (int which = 0; which < image.hyperstack.length; which++) {
+			opacityTab.setSelectedIndex(which);
+
+			String opacityTransferFunctionStr = opacityPrefs.get("opacityTransferFunction_" + which, "");
+
+			if (!opacityTransferFunctionStr.isEmpty()) {
+				TransferFunction opacityTransferFunction = new TransferFunction();
+
+				// Parse the saved opacity transfer function string
+				String[] opacityParts = opacityTransferFunctionStr.split("\\s+");
+				int numOpacityPoints = Integer.parseInt(opacityParts[1]);
+
+				for (int i = 0; i < numOpacityPoints; i++) {
+					float x = Float.parseFloat(opacityParts[2 + i * 2]);
+					float y = Float.parseFloat(opacityParts[3 + i * 2]);
+					opacityTransferFunction.addPoint(x, y);
+				}
+
+				// Ensure the image is not null before applying
+				if (image != null) {
+					ViewJComponentVolOpacityBase compA = image.volOpacityPanel[which].getCompA();
+					compA.updateTransFunc(opacityTransferFunction);
+					image.volOpacityPanel[which].update(false);
+
+					System.out.println("Applied opacity settings to image channel: " + which);
+				}
+			} else {
+				System.out.println("No saved opacity settings found for image channel: " + which);
+			}
+		}
+	}
+
+	// Dual: Save Lattice settings to the GlobalSettings object
+	private float getLatticeSetting(IntegratedWormData image) {
+
+		boolean displaySeam = image.latticeTable.getDisplaySeam();
+		boolean displayLattice = image.latticeTable.getDisplayLattice();
+
+		// Save settings in Preferences
+		java.util.prefs.Preferences latticePrefs = java.util.prefs.Preferences.userRoot()
+				.node(this.getClass().getName());
+		latticePrefs.putBoolean("displaySeam", displaySeam);
+		latticePrefs.putBoolean("displayLattice", displayLattice);
+
+		System.out.println("Saved lattice settings: displaySeam=" + displaySeam + ", displayLattice=" + displayLattice);
+
+		return 0.0f;
+	}
+
+	// Dual: Apply saved Lattice settings to the active image
+	private void setLatticeSetting(IntegratedWormData image, float ignoredPlaceholder) {
+
+		java.util.prefs.Preferences latticePrefs = java.util.prefs.Preferences.userRoot()
+				.node(this.getClass().getName());
+
+		boolean displaySeam = latticePrefs.getBoolean("displaySeam", false);
+		boolean displayLattice = latticePrefs.getBoolean("displayLattice", false);
+
+		if (image != null) {
+			// Apply settings to active image
+			image.latticeTable.setDisplaySeam(displaySeam);
+			image.latticeTable.setDisplayLattice(displayLattice);
+
+			System.out.println(
+					"Applied lattice settings: displaySeam=" + displaySeam + ", displayLattice=" + displayLattice);
 		} else {
-			System.err.println("Error: activeImage or integratedData is null.");
+			System.err.println("Error: image is null. Cannot apply lattice settings.");
 		}
-		
-	}
-
-	private float getAnnotationSetting() {
-		// Retrieve the annotation setting from the annotation panels
-		return 0.0f; //annotationPanels.getAnnotationSetting();
-	}
-
-	private void setAnnotationSetting(float setting) {
-		// Update the annotation setting in the annotation panels
-		//annotationPanels.setAnnotationSetting(setting);
 	}
 
 	// Add UI elements to trigger saving, applying, and resetting settings
