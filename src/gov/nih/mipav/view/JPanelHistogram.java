@@ -1006,23 +1006,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			return;
 		}
 		LUT = newLUT;
-		Container pppp = getParent().getParent().getParent().getParent();
-		if (javax.swing.JTabbedPane.class.isInstance(pppp)){
-			if (((javax.swing.JTabbedPane)pppp).getSelectedComponent()==getParent().getParent().getParent())
-            {
-                if ( !image.isColorImage() )
-                {
-                    histoPanel.getLUTComponent().show((ModelLUT)LUT);
-                    histoPanel.getHistoLUTComponent().showHistogram((ModelLUT)LUT);
-                }
-                else
-                {
-                    histoPanel.getHistoLUTComponent().setLUT(LUT);
-                    histoPanel.getHistoLUTComponent().showHistogram(null);			
-                }	
-			}
-		}
-		else if ( !image.isColorImage() )
+		if ( !image.isColorImage() )
 		{
 			histoPanel.getLUTComponent().show((ModelLUT)LUT);
 			histoPanel.getHistoLUTComponent().showHistogram((ModelLUT)LUT);
