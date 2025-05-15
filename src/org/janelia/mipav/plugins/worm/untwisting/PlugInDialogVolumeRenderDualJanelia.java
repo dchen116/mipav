@@ -195,6 +195,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 	private JPanel optionsPanel;
 	private JPanel displayControls;
 	private JPanel imageChannels;
+	private JPanel globalSettingsPanel;
 
 	private JPanel latticeSelectionPanel;
 	private JRadioButton latticeStraighten;
@@ -673,6 +674,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
 						imageChannels.setVisible(true);
+						globalSettingsPanel.setVisible(true);
 
 						validate();
 						leftRenderer.setVisible(true);
@@ -693,6 +695,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
 						imageChannels.setVisible(true);
+						globalSettingsPanel.setVisible(true);
 
 						validate();
 						leftRenderer.setVisible(true);
@@ -712,6 +715,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
 						imageChannels.setVisible(true);
+						globalSettingsPanel.setVisible(true);
 
 						validate();
 						leftRenderer.setVisible(true);
@@ -1396,11 +1400,11 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		lutPanel.removeAll();
 		opacityPanel.removeAll();
 		clipPanel.removeAll();
-		accuratePanel.removeAll();
+		//accuratePanel.removeAll();
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
 		tabbedPane.addTab("Clip", null, clipPanel);
-		tabbedPane.addTab("AccurateMode", null, accuratePanel);
+		tabbedPane.addTab("Selection", null, accuratePanel);
 		tabbedPane.addChangeListener(this);
 
 		startButton.setEnabled(true);
@@ -1425,8 +1429,11 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 
 		lightsPanel = null;
 		annotationPanels = null;
+		annotationPanelSingle = null;
 		latticePanel = null;
+		latticePanelSingle = null;
 		curvePanel = null;
+		curvePanelSingle = null;
 
 		if (leftRenderer != null) {
 			leftRenderer.dispose();
@@ -2060,6 +2067,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 					rightDisplayPanel.setMinimumSize(minimumSize);
 				} else {
 					rightRenderer = null;
+					rightDisplayPanel = null;
+					dualGPU = null;
 
 					leftDisplayPanel = new JPanel(new BorderLayout());
 					leftDisplayPanel.add(leftRenderer.GetCanvas(), BorderLayout.CENTER);
@@ -2686,11 +2695,12 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame
 		topLeftPanel.add(imageChannels, gbcglobal);
 
 		// Add the global settings panel
-		JPanel globalSettingsPanel = addGlobalSettingsUI();
+		globalSettingsPanel = addGlobalSettingsUI();
 		gbcglobal.gridx = 0;
 		gbcglobal.gridy = 1;
 		gbcglobal.anchor = GridBagConstraints.WEST;
 		topLeftPanel.add(globalSettingsPanel, gbcglobal);
+		globalSettingsPanel.setVisible(false);
 
 		leftPanel.add(topLeftPanel, BorderLayout.WEST); //BorderLayout.CENTER will make the panel align to the center
 		leftPanel.add(tabbedPane, BorderLayout.SOUTH);
